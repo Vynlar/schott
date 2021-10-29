@@ -34,3 +34,7 @@
     (let [user (auth/get-user-by-email "email@example.com")]
       (is (= user (auth/login-user {:email (:email user)
                                    :password "password"}))))))
+
+(deftest test-password-hashing
+  (testing "valid password"
+    (is (auth/check-password "my-password" (auth/hash-password "my-password")))))

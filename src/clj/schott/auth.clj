@@ -27,7 +27,7 @@
 
 (comment
   (check-password
-   "wowf"
+   "wow"
    (hash-password "wow"))
 
 
