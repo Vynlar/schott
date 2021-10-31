@@ -45,8 +45,25 @@
    (when-let [docs @(rf/subscribe [:docs])]
      [:div {:dangerouslySetInnerHTML {:__html (md->html docs)}}])])
 
-(defn my-page []
-  [:div "my-page"])
+(defn with-default-prevented [f]
+  (fn [e]
+    (.preventDefault e)
+    (f e)))
+
+(defn target-value [e]
+  (.. e -target -value))
+
+(defn login-page []
+  (let [email (rf/subscribe [:login/email])
+        password (rf/subscribe [:login/password])
+        message (rf/subscribe [:login/message])]
+    [:form {:on-submit (with-default-prevented (fn [_] (rf/dispatch [:login/submit])))}
+     [:label {:for :email} "Email"]
+     [:input {:id :email :type "email" :value @email :onChange #(rf/dispatch [:login/change-email (target-value %)])}]
+     [:label {:for :password} "Password"]
+     [:input {:id :password :type "password" :value @password :onChange #(rf/dispatch [:login/change-password (target-value %)])}]
+     (when @message [:div @message])
+     [:button {:type :submit} "Login"]]))
 
 (defn page []
   (if-let [page @(rf/subscribe [:common/page])]
@@ -64,8 +81,9 @@
            :controllers [{:start (fn [_] (rf/dispatch [:page/init-home]))}]}]
      ["/about" {:name :about
                 :view #'about-page}]
-     ["/my-page" {:name :my-page
-                  :view #'my-page}]]))
+     ["/login" {:name :login
+                :view #'login-page
+                :controllers [{:start (fn [_] (rf/dispatch [:page/init-login]))}]}]]))
 
 (defn start-router! []
   (rfe/start!

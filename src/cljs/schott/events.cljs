@@ -2,6 +2,7 @@
   (:require
     [re-frame.core :as rf]
     [ajax.core :as ajax]
+    [schott.ajax :refer [as-transit]]
     [reitit.frontend.easy :as rfe]
     [reitit.frontend.controllers :as rfc]))
 
@@ -42,11 +43,47 @@
   :common/set-error
   (fn [db [_ error]]
     (assoc db :common/error error)))
-
 (rf/reg-event-fx
   :page/init-home
   (fn [_ _]
     {:dispatch [:fetch-docs]}))
+
+(rf/reg-event-db
+  :page/init-login
+  (fn [db _]
+    (assoc db :login {:email "" :password "" :message nil})))
+
+(rf/reg-event-db
+  :login/change-email
+  (fn [db [_ new-email]]
+    (assoc-in db [:login :email] new-email)))
+
+(rf/reg-event-db
+  :login/change-password
+  (fn [db [_ new-password]]
+    (assoc-in db [:login :password] new-password)))
+
+(rf/reg-event-fx
+  :login/submit
+  (fn [{:keys [db]} _]
+    (js/console.log db)
+    {:http-xhrio (as-transit
+                  {:method :post
+                   :uri "/auth/login"
+                   :body (select-keys (get db :login) [:email :password])
+                   :on-success [:login/submit-success]
+                   :on-failure [:login/submit-failure]})}))
+
+(rf/reg-event-db
+ :login/submit-failure
+ (fn [db [_ res]]
+   (let [message (get-in res [:response :message])]
+     (assoc-in db [:login :message] message))))
+
+(rf/reg-event-fx
+ :login/submit-success
+ (fn [cofx _]
+   {:dispatch [[:common/navigate :home]]}))
 
 ;;subscriptions
 
@@ -76,3 +113,18 @@
   :common/error
   (fn [db _]
     (:common/error db)))
+
+(rf/reg-sub
+  :login/email
+  (fn [db _]
+    (get-in db [:login :email])))
+
+(rf/reg-sub
+  :login/password
+  (fn [db _]
+    (get-in db [:login :password])))
+
+(rf/reg-sub
+  :login/message
+  (fn [db _]
+    (get-in db [:login :message])))

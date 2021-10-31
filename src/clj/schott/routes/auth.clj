@@ -5,14 +5,14 @@
    [schott.auth :as auth]
    [schott.middleware :as middleware]))
 
-(defn handle-login [{:keys [session params]}]
+(defn handle-login [{:keys [session params] :as req}]
   (let [{:keys [email password]} params
         user (auth/login-user {:email email
                                :password password})]
     (if user
       (-> (response/ok (select-keys user [:id :email :admin :is_active]))
           (assoc :session (assoc session :identity user)))
-      (-> (response/ok {:message "Invalid email or password"})))))
+      (-> (response/unauthorized {:message "Invalid email or password"})))))
 
 (defn handle-logout [{:keys [session]}]
   (-> (response/found "/")
