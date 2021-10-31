@@ -5,6 +5,7 @@
     [clojure.pprint]
     [clojure.spec.alpha :as s]
     [expound.alpha :as expound]
+    [shadow.cljs.devtools.server :as shadow-server]
     [mount.core :as mount]
     [schott.core :refer [start-app]]
     [schott.db.core]
@@ -59,3 +60,6 @@
   "Create a new up and down migration file with a generated timestamp and `name`."
   [name]
   (migrations/create name (select-keys env [:database-url])))
+
+(defn start-shadow []
+  (shadow-server/start!))

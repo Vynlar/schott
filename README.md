@@ -16,6 +16,16 @@ To start a web server for the application, run:
 
     lein run 
 
+## Usage With CIDER
+
+```
+cider-jack-in-clj
+run (start-shadow) in the repl
+cider-connect-sibling-cljs
+???
+Profit
+```
+
 ## License
 
 Copyright © 2021 FIXME
