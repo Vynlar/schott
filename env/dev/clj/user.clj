@@ -16,6 +16,9 @@
 
 (add-tap (bound-fn* clojure.pprint/pprint))
 
+(defn start-shadow []
+  (shadow-server/start!))
+
 (defn start
   "Starts application.
   You'll usually want to run this on startup."
@@ -61,5 +64,3 @@
   [name]
   (migrations/create name (select-keys env [:database-url])))
 
-(defn start-shadow []
-  (shadow-server/start!))

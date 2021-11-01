@@ -9,8 +9,9 @@
   (let [{:keys [email password]} params
         user (auth/login-user {:email email
                                :password password})]
+    (println user)
     (if user
-      (-> (response/ok (select-keys user [:id :email :admin :is_active]))
+      (-> (response/ok (select-keys user [:user/id :user/email]))
           (assoc :session (assoc session :identity user)))
       (-> (response/unauthorized {:message "Invalid email or password"})))))
 

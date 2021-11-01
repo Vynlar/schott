@@ -66,13 +66,12 @@
 (rf/reg-event-fx
   :login/submit
   (fn [{:keys [db]} _]
-    (js/console.log db)
-    {:http-xhrio (as-transit
-                  {:method :post
-                   :uri "/auth/login"
-                   :body (select-keys (get db :login) [:email :password])
-                   :on-success [:login/submit-success]
-                   :on-failure [:login/submit-failure]})}))
+    {:http-xhrio
+     (as-transit {:method :post
+                  :uri "/auth/login"
+                  :params (select-keys (get db :login) [:email :password])
+                  :on-success [:login/submit-success]
+                  :on-failure [:login/submit-failure]})}))
 
 (rf/reg-event-db
  :login/submit-failure

@@ -1,7 +1,7 @@
 (ns schott.auth
   (:require
    [buddy.hashers :as hashers]
-   [schott.db.core :as db]))
+   [schott.db.resolvers :as resolvers]))
 
 (defn uuid [] (str (java.util.UUID/randomUUID)))
 
@@ -9,21 +9,17 @@
 (defn hash-password [password] (hashers/derive password hashing-options))
 (defn check-password [password hash] (hashers/check password hash))
 
-(defn get-user-by-email [email]
-  (db/get-user-by-email {:email email}))
-
 (defn login-user [{:keys [email password]}]
-  (when-let [user (get-user-by-email email)]
-    (if (check-password password (:password user))
+  (when-let [{:user/keys [hashed-password] :as user}
+             (resolvers/run-eql {:user/email email}
+                                [:user/hashed-password :user/email :user/id])]
+    (if (check-password password hashed-password)
       user
       nil)))
 
 (defn create-user [{:keys [email password]}]
-  (db/create-user! {:id (uuid)
-                    :email email
-                    :password (hash-password password)
-                    :is_active true
-                    :admin false}))
+  (resolvers/run-eql {} ['(::resolvers/create-user {:user/email email
+                                                    :user/hashed-password (hash-password password)})]))
 
 (comment
   (check-password
@@ -33,11 +29,6 @@
 
   (create-user {:email "adrian@example.com" :password "password"})
   (login-user {:email "adrian@example.com" :password "password"})
-
-  (db/create-user! {:id (uuid)
-                    :first_name "Adrian"
-                    :last_name "Aleixandre"
-                    :email "adrian@example.com"
-                    :pass ()})
+  (login-user {:email "adrian@example.com" :password "invalidpassword"})
 
   (get-user-by-email "adrian@example.com"))
