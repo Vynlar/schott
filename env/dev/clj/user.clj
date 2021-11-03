@@ -2,15 +2,16 @@
   "Userspace functions you can run by default in your local REPL."
   (:require
    [schott.config :refer [env]]
-    [clojure.pprint]
-    [clojure.spec.alpha :as s]
-    [expound.alpha :as expound]
-    [shadow.cljs.devtools.server :as shadow-server]
-    [mount.core :as mount]
-    [schott.core :refer [start-app]]
-    [schott.db.core]
-    [conman.core :as conman]
-    [luminus-migrations.core :as migrations]))
+   [clojure.pprint]
+   [clojure.spec.alpha :as s]
+   [expound.alpha :as expound]
+   [shadow.cljs.devtools.server :as shadow-server]
+   [mount.core :as mount]
+   [schott.core :refer [start-app]]
+   [schott.db.core]
+   [schott.db.datahike]
+   [conman.core :as conman]
+   [luminus-migrations.core :as migrations]))
 
 (alter-var-root #'s/*explain-out* (constantly expound/printer))
 
@@ -63,4 +64,3 @@
   "Create a new up and down migration file with a generated timestamp and `name`."
   [name]
   (migrations/create name (select-keys env [:database-url])))
-

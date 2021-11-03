@@ -27,6 +27,7 @@
                  eql))
 
 (comment
+  (run-eql {} [{[:user/email "adrian@example.com"] [:user/id]}])
   (p.eql/process indexes
                  {:user/email "adrian1@example.com"}
                  [:user/email :user/id :user/hashed-password])

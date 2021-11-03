@@ -40,6 +40,7 @@
                  [org.webjars.npm/material-icons "1.0.0"]
                  [org.webjars/webjars-locator "0.42"]
                  [org.webjars/webjars-locator-jboss-vfs "0.1.0"]
+                 [com.wsscode/pathom "2.4.0"]
                  [com.wsscode/pathom3 "2021.07.10-alpha"]
                  [re-frame "1.2.0"]
                  [reagent "1.1.0"]
