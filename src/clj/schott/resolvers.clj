@@ -18,12 +18,13 @@
   (db/get-user-by-id conn id))
 
 (pc/defmutation create-user [{conn :db/conn} {:user/keys [email hashed-password]}]
-  {::pc/params [:user/email :user/hashed-password]
+  {::pc/sym `create-user
+   ::pc/params [:user/email :user/hashed-password]
    ::pc/output [:user/id]}
   (db/create-user conn {:user/email email
                         :user/hashed-password hashed-password}))
 
-(defstate registry :start [user-from-email user-from-id create-user])
+(def registry [user-from-email user-from-id create-user])
 
 (defstate parser
   :start (p/parser {::p/env {::p/reader [p/map-reader
@@ -39,6 +40,6 @@
                                  p/trace-plugin]}))
 
 (comment
-  (parser {} [{[:user/email "two@example.com"] [:user/id :user/hashed-password]}])
-  (parser {} ['(create-user {:user/email "two@example.com"
-                             :user/password "password"})]))
+  #_(parser {} ['(create-user {:user/email "two@example.com"
+                               :user/hashed-password ()})])
+  (parser {} [{[:user/email "two@example.com"] [:user/id :user/hashed-password]}]))

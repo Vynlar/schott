@@ -24,15 +24,15 @@
               :db/valueType :db.type/string
               :db/cardinality :db.cardinality/one}])
 
-(defn test-db-config [id]
-  {:store
-   {:backend :mem
-    :id id}})
-
-(defn uuid [] (java.util.UUID/randomUUID))
+(defn- uuid [] (java.util.UUID/randomUUID))
 
 (defstate conn
   :start (d/connect config))
+
+(defn- test-db-config [id]
+  {:store
+   {:backend :mem
+    :id id}})
 
 (defn test-conn [id]
   (let [config (test-db-config id)]
@@ -44,17 +44,6 @@
                  (d/transact c schema)
                  c))
      :stop #(d/delete-database config)}))
-
-;; Setup
-(comment
-  (d/create-database config)
-  (d/delete-database config)
-
-  (d/transact conn schema)
-
-  (d/transact conn [{:user/id (uuid)
-                     :user/email "adrian@example.com"
-                     :user/hashed-password (hashers/derive "password")}]))
 
 (defn create-user
   ([params] (create-user conn params))
@@ -83,7 +72,6 @@
         @conn id)))
 
 (comment
-
   (d/transact conn [{:user/email "blarp@example.com"
                      :user/hashed-password (hashers/derive "password")}])
 
@@ -112,4 +100,13 @@
   (d/transact conn [{:db/ident :user/id
                      :db/unique :db.unique/identity
                      :db/valueType :db.type/uuid
-                     :db/cardinality :db.cardinality/one}]))
+                     :db/cardinality :db.cardinality/one}])
+
+  (d/create-database config)
+  (d/delete-database config)
+
+  (d/transact conn schema)
+
+  (d/transact conn [{:user/id (uuid)
+                     :user/email "adrian@example.com"
+                     :user/hashed-password (hashers/derive "password")}]))
