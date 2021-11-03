@@ -1,19 +1,11 @@
 (ns schott.auth-test
   (:require
-   [mount.core :as mount]
-   [schott.config :refer [env]]
-   [schott.db.datahike :as db]
-   [schott.resolvers]
    [clojure.test :refer :all]
-   [schott.auth :as auth]))
+   [schott.auth :as auth]
+   [schott.resolvers]
+   [schott.test_helpers :refer [with-test-db]]))
 
-(use-fixtures
-  :each
-  (fn [f]
-    (-> (mount/swap-states {#'schott.db.datahike/conn (db/test-conn "test-db-4")})
-        mount/start)
-    (f)
-    (mount/stop)))
+(use-fixtures :each (with-test-db))
 
 (deftest test-login-user
   (testing "unknown email returns nil"

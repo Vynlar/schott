@@ -18,8 +18,9 @@
         nil))))
 
 (defn create-user [{:keys [email password]}]
-  (r/parser {} [`(r/create-user {:user/email ~email
-                                 :user/password ~password})]))
+  (let [hashed-password (hash-password password)]
+    (r/parser {} [`(r/create-user {:user/email ~email
+                                   :user/hashed-password ~hashed-password})])))
 
 (comment
   (check-password

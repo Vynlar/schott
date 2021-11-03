@@ -3,8 +3,7 @@
    [schott.db.datahike :as db]
    [com.wsscode.pathom.core :as p]
    [com.wsscode.pathom.connect :as pc]
-   [mount.core :refer [defstate]]
-   [buddy.hashers :as hashers]))
+   [mount.core :refer [defstate]]))
 
 (pc/defresolver user-from-email
   [{conn :db/conn} {:user/keys [email]}]
@@ -18,11 +17,11 @@
    ::pc/output [:user/email :user/hashed-password]}
   (db/get-user-by-id conn id))
 
-(pc/defmutation create-user [{conn :db/conn} {:user/keys [email password]}]
-  {::pc/params [:user/email :user/password]
+(pc/defmutation create-user [{conn :db/conn} {:user/keys [email hashed-password]}]
+  {::pc/params [:user/email :user/hashed-password]
    ::pc/output [:user/id]}
   (db/create-user conn {:user/email email
-                        :user/hashed-password (hashers/derive password)}))
+                        :user/hashed-password hashed-password}))
 
 (defstate registry :start [user-from-email user-from-id create-user])
 

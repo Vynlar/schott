@@ -37,6 +37,8 @@
 (defn test-conn [id]
   (let [config (test-db-config id)]
     {:start #(do
+               (when (d/database-exists? config)
+                 (d/delete-database config))
                (d/create-database config)
                (let [c (d/connect config)]
                  (d/transact c schema)
