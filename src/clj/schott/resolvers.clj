@@ -40,6 +40,4 @@
                                  p/trace-plugin]}))
 
 (comment
-  #_(parser {} ['(create-user {:user/email "two@example.com"
-                               :user/hashed-password ()})])
   (parser {} [{[:user/email "two@example.com"] [:user/id :user/hashed-password]}]))
