@@ -63,16 +63,6 @@
  (fn [db [_ new-password]]
    (assoc-in db [:login :password] new-password)))
 
-(rf/reg-event-fx
- :login/submit
- (fn [{:keys [db]} _]
-   {:http-xhrio
-    (as-transit {:method :post
-                 :uri "/auth/login"
-                 :params (select-keys (get db :login) [:email :password])
-                 :on-success [:login/submit-success]
-                 :on-failure [:login/submit-failure]})}))
-
 (rf/reg-event-db
  :login/submit-failure
  (fn [db [_ res]]
