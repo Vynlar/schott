@@ -12,7 +12,7 @@
 
 (defn home-routes []
   [""
-   {:middleware [middleware/wrap-csrf
+   {:middleware [#_middleware/wrap-csrf
                  middleware/wrap-formats]}
    ["/" {:get home-page}]
    ["/docs" {:get (fn [_]

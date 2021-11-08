@@ -1,17 +1,17 @@
 (ns schott.core
   (:require
-    [day8.re-frame.http-fx]
-    [reagent.dom :as rdom]
-    [reagent.core :as r]
-    [re-frame.core :as rf]
-    [goog.events :as events]
-    [goog.history.EventType :as HistoryEventType]
-    [markdown.core :refer [md->html]]
-    [schott.ajax :as ajax]
-    [schott.events]
-    [reitit.core :as reitit]
-    [reitit.frontend.easy :as rfe]
-    [clojure.string :as string])
+   [day8.re-frame.http-fx]
+   [reagent.dom :as rdom]
+   [reagent.core :as r]
+   [re-frame.core :as rf]
+   [goog.events :as events]
+   [goog.history.EventType :as HistoryEventType]
+   [markdown.core :refer [md->html]]
+   [schott.ajax :as ajax]
+   [schott.events]
+   [reitit.core :as reitit]
+   [reitit.frontend.easy :as rfe]
+   [clojure.string :as string])
   (:import goog.History))
 
 (defn nav-link [uri title page]
@@ -20,21 +20,21 @@
     :class (when (= page @(rf/subscribe [:common/page-id])) :is-active)}
    title])
 
-(defn navbar [] 
+(defn navbar []
   (r/with-let [expanded? (r/atom false)]
-              [:nav.navbar.is-info>div.container
-               [:div.navbar-brand
-                [:a.navbar-item {:href "/" :style {:font-weight :bold}} "schott"]
-                [:span.navbar-burger.burger
-                 {:data-target :nav-menu
-                  :on-click #(swap! expanded? not)
-                  :class (when @expanded? :is-active)}
-                 [:span][:span][:span]]]
-               [:div#nav-menu.navbar-menu
-                {:class (when @expanded? :is-active)}
-                [:div.navbar-start
-                 [nav-link "#/" "Home" :home]
-                 [nav-link "#/about" "About" :about]]]]))
+    [:nav.navbar.is-info>div.container
+     [:div.navbar-brand
+      [:a.navbar-item {:href "/" :style {:font-weight :bold}} "schott"]
+      [:span.navbar-burger.burger
+       {:data-target :nav-menu
+        :on-click #(swap! expanded? not)
+        :class (when @expanded? :is-active)}
+       [:span] [:span] [:span]]]
+     [:div#nav-menu.navbar-menu
+      {:class (when @expanded? :is-active)}
+      [:div.navbar-start
+       [nav-link "#/" "Home" :home]
+       [nav-link "#/about" "About" :about]]]]))
 
 (defn about-page []
   [:section.section>div.container>div.content
@@ -57,7 +57,7 @@
   (let [email (rf/subscribe [:login/email])
         password (rf/subscribe [:login/password])
         message (rf/subscribe [:login/message])]
-    [:form {:on-submit (with-default-prevented (fn [_] (rf/dispatch [:login/submit])))}
+    [:form {:on-submit (with-default-prevented (fn [_] (rf/dispatch [:login/submit-eql])))}
      [:label {:for :email} "Email"]
      [:input {:id :email :type "email" :value @email :onChange #(rf/dispatch [:login/change-email (target-value %)])}]
      [:label {:for :password} "Password"]
@@ -76,20 +76,20 @@
 
 (def router
   (reitit/router
-    [["/" {:name        :home
-           :view        #'home-page
-           :controllers [{:start (fn [_] (rf/dispatch [:page/init-home]))}]}]
-     ["/about" {:name :about
-                :view #'about-page}]
-     ["/login" {:name :login
-                :view #'login-page
-                :controllers [{:start (fn [_] (rf/dispatch [:page/init-login]))}]}]]))
+   [["/" {:name        :home
+          :view        #'home-page
+          :controllers [{:start (fn [_] (rf/dispatch [:page/init-home]))}]}]
+    ["/about" {:name :about
+               :view #'about-page}]
+    ["/login" {:name :login
+               :view #'login-page
+               :controllers [{:start (fn [_] (rf/dispatch [:page/init-login]))}]}]]))
 
 (defn start-router! []
   (rfe/start!
-    router
-    navigate!
-    {}))
+   router
+   navigate!
+   {}))
 
 ;; -------------------------
 ;; Initialize app

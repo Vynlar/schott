@@ -1,11 +1,7 @@
 (ns schott.auth
   (:require
-   [buddy.hashers :as hashers]
+   [schott.auth.hashers :refer [check-password hash-password]]
    [schott.resolvers :as r]))
-
-(def hashing-options {:alg :bcrypt+sha512})
-(defn hash-password [password] (hashers/derive password hashing-options))
-(defn check-password [password hash] (hashers/check password hash))
 
 (defn login-user [{:keys [email password]}]
   (let [ident [:user/email email]

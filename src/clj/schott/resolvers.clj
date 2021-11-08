@@ -1,9 +1,12 @@
 (ns schott.resolvers
   (:require
-   [schott.db.datahike :as db]
-   [com.wsscode.pathom.core :as p]
    [com.wsscode.pathom.connect :as pc]
-   [mount.core :refer [defstate]]))
+   [com.wsscode.pathom.core :as p]
+   [mount.core :refer [defstate]]
+   [schott.auth.hashers :refer [hash-password check-password]]
+   [schott.db.datahike :as db]))
+
+(declare parser)
 
 (pc/defresolver user-from-email
   [{conn :db/conn} {:user/keys [email]}]
@@ -17,14 +20,31 @@
    ::pc/output [:user/email :user/hashed-password]}
   (db/get-user-by-id conn id))
 
-(pc/defmutation create-user [{conn :db/conn} {:user/keys [email hashed-password]}]
+(pc/defmutation create-user [{:db/keys [conn] :as env} {:user/keys [email password]}]
   {::pc/sym `create-user
-   ::pc/params [:user/email :user/hashed-password]
+   ::pc/params [:user/email :user/password]
    ::pc/output [:user/id]}
-  (db/create-user conn {:user/email email
-                        :user/hashed-password hashed-password}))
+  (let [query-result (parser env [{[:user/email email] [:user/id]}])
+        user (get query-result [:user/email email])]
+    (if (:user/id user)
+      {:user/email nil}
+      (let [hashed-password (hash-password password)
+            user (db/create-user conn {:user/email email
+                                       :user/hashed-password hashed-password})]
+        user))))
 
-(def registry [user-from-email user-from-id create-user])
+(pc/defmutation login [env {:user/keys [email password]}]
+  {::pc/sym `login
+   ::pc/params [:user/email :user/password]
+   ::pc/output [:user/id]}
+  (let [query-result (parser env [{[:user/email email] [:user/id :user/hashed-password]}])
+        user (get query-result [:user/email email])]
+    (when-let [{:user/keys [id hashed-password]} user]
+      (if (and (uuid? id) (check-password password hashed-password))
+        {:user/id id}
+        nil))))
+
+(def registry [user-from-email user-from-id create-user login])
 
 (defstate parser
   :start (p/parser {::p/env {::p/reader [p/map-reader
@@ -40,4 +60,6 @@
                                  p/trace-plugin]}))
 
 (comment
-  (parser {} [{[:user/email "two@example.com"] [:user/id :user/hashed-password]}]))
+  (parser {} [`(login {:user/email "day@example.com" :user/password "password"})])
+  (parser {} [`(create-user {:user/email "day2@example.com" :user/password "password"})])
+  (parser {} [{[:user/email "email@example.com"] [:user/id :user/hashed-password]}]))

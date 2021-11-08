@@ -48,9 +48,11 @@
 (defn create-user
   ([params] (create-user conn params))
   ([conn {:user/keys [email hashed-password]}]
-   (d/transact conn [{:user/id (uuid)
-                      :user/email email
-                      :user/hashed-password hashed-password}])))
+   (let [id (uuid)]
+     (d/transact conn [{:user/id id
+                        :user/email email
+                        :user/hashed-password hashed-password}])
+     {:user/id id})))
 
 (defn get-user-id-by-email
   ([conn email]

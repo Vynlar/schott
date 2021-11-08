@@ -1,17 +1,17 @@
 (ns user
   "Userspace functions you can run by default in your local REPL."
   (:require
-   [schott.config :refer [env]]
    [clojure.pprint]
    [clojure.spec.alpha :as s]
+   [conman.core :as conman]
    [expound.alpha :as expound]
-   [shadow.cljs.devtools.server :as shadow-server]
+   [luminus-migrations.core :as migrations]
    [mount.core :as mount]
-   [schott.core :refer [start-app]]
+   [schott.config :refer [env]]
+   [schott.core]
    [schott.db.core]
    [schott.db.datahike]
-   [conman.core :as conman]
-   [luminus-migrations.core :as migrations]))
+   [shadow.cljs.devtools.server :as shadow-server]))
 
 (alter-var-root #'s/*explain-out* (constantly expound/printer))
 
