@@ -44,7 +44,19 @@
         {:user/id id}
         nil))))
 
-(def registry [user-from-email user-from-id create-user login])
+(pc/defresolver shot-from-id
+  [{conn :db/conn} {:shot/keys [id]}]
+  {::pc/input #{:shot/id}
+   ::pc/output [:shot/in :shot/out :shot/created-at :shot/duration]}
+  (db/get-shot-by-id conn id))
+
+(pc/defmutation create-shot [{:db/keys [conn]} params]
+  {::pc/sym `create-shot
+   ::pc/params [:shot/in :shot/out :shot/duration]
+   ::pc/output [:shot/id]}
+  (db/create-shot conn params))
+
+(def registry [user-from-email user-from-id create-user login create-shot shot-from-id])
 
 (defstate parser
   :start (p/parser {::p/env {::p/reader [p/map-reader

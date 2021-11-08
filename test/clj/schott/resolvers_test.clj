@@ -49,3 +49,14 @@
     (testing "should fail to create if email is already taken"
       (is (= {:user/id nil
               :user/email nil} user)))))
+
+(deftest create-shot
+  (testing "should create a new shot"
+    (let [data {:shot/created-at #inst "2021-11-08T12:00:00Z"
+                :shot/in 18.0
+                :shot/out 36.0
+                :shot/duration 25.0}
+          response (parser {} [{`(schott.resolvers/create-shot ~data)
+                                (into [] (keys data))}])
+          shot (get response 'schott.resolvers/create-shot)]
+      (is (= shot data)))))

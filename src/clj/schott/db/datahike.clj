@@ -22,6 +22,22 @@
               :db/cardinality :db.cardinality/one}
              {:db/ident :user/hashed-password
               :db/valueType :db.type/string
+              :db/cardinality :db.cardinality/one}
+
+             {:db/ident :shot/id
+              :db/valueType :db.type/uuid
+              :db/cardinality :db.cardinality/one}
+             {:db/ident :shot/created-at
+              :db/valueType :db.type/instant
+              :db/cardinality :db.cardinality/one}
+             {:db/ident :shot/in
+              :db/valueType :db.type/double
+              :db/cardinality :db.cardinality/one}
+             {:db/ident :shot/out
+              :db/valueType :db.type/double
+              :db/cardinality :db.cardinality/one}
+             {:db/ident :shot/duration
+              :db/valueType :db.type/double
               :db/cardinality :db.cardinality/one}])
 
 (defn- uuid [] (java.util.UUID/randomUUID))
@@ -73,6 +89,24 @@
           [?u :user/id ?id]]
         @conn id)))
 
+(defn create-shot
+  ([params] (create-shot conn params))
+  ([conn params]
+   (let [id (uuid)
+         tx (merge params
+                   {:shot/id id})]
+     (d/transact conn [tx])
+     {:shot/id id})))
+
+(defn get-shot-by-id
+  ([id] (get-shot-by-id conn id))
+  ([conn id]
+   (d/q '[:find (pull ?u [*]) .
+          :in $ ?id
+          :where
+          [?u :shot/id ?id]]
+        @conn id)))
+
 (comment
   (d/transact conn [{:user/email "blarp@example.com"
                      :user/hashed-password (hashers/derive "password")}])
@@ -89,6 +123,16 @@
   (get-user-id-by-email "three@example.com")
   (get-user-by-id
    (get-user-id-by-email "three@example.com"))
+
+  (create-shot conn {:shot/created-at #inst "2021-11-08T12:00:00Z"
+                     :shot/in 18.0
+                     :shot/out 36.5
+                     :shot/duration 25.0})
+
+  (d/q '[:find (pull ?s [*])
+         :where
+         [?s :shot/created-at _]]
+       @conn)
 
   (d/q '[:find (pull ?u [*]) .
          :in $ ?email
