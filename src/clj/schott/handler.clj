@@ -4,7 +4,6 @@
    [schott.layout :refer [error-page]]
    [schott.routes.home :refer [home-routes]]
    [schott.routes.api :refer [api-routes]]
-   [schott.routes.auth :refer [auth-routes]]
    [reitit.ring :as ring]
    [ring.middleware.content-type :refer [wrap-content-type]]
    [ring.middleware.webjars :refer [wrap-webjars]]
@@ -19,8 +18,7 @@
   :start
   (ring/ring-handler
    (ring/router
-    [(auth-routes)
-     (home-routes)
+    [(home-routes)
      (api-routes)])
    (ring/routes
     (ring/create-resource-handler

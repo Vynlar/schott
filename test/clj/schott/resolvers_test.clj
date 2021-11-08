@@ -1,4 +1,4 @@
-(ns schott.auth-test
+(ns schott.resolvers-test
   (:require
    [clojure.test :refer :all]
    [schott.resolvers :refer [parser]]
