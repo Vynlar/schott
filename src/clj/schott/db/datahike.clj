@@ -25,6 +25,7 @@
               :db/cardinality :db.cardinality/one}
 
              {:db/ident :shot/id
+              :db/unique :db.unique/identity
               :db/valueType :db.type/uuid
               :db/cardinality :db.cardinality/one}
              {:db/ident :shot/created-at
@@ -38,6 +39,9 @@
               :db/cardinality :db.cardinality/one}
              {:db/ident :shot/duration
               :db/valueType :db.type/double
+              :db/cardinality :db.cardinality/one}
+             {:db/ident :shot/user
+              :db/valueType :db.type/ref
               :db/cardinality :db.cardinality/one}])
 
 (defn- uuid [] (java.util.UUID/randomUUID))
@@ -101,7 +105,7 @@
 (defn get-shot-by-id
   ([id] (get-shot-by-id conn id))
   ([conn id]
-   (d/q '[:find (pull ?u [*]) .
+   (d/q '[:find (pull ?u [* {:shot/user [:user/id]}]) .
           :in $ ?id
           :where
           [?u :shot/id ?id]]
@@ -127,12 +131,16 @@
   (create-shot conn {:shot/created-at #inst "2021-11-08T12:00:00Z"
                      :shot/in 18.0
                      :shot/out 36.5
-                     :shot/duration 25.0})
+                     :shot/duration 25.0
+                     :shot/user [:user/email "three@example.com"]})
 
-  (d/q '[:find (pull ?s [*])
-         :where
-         [?s :shot/created-at _]]
-       @conn)
+  (get-shot-by-id
+   (:shot/id
+    (ffirst
+     (d/q '[:find (pull ?s [*])
+            :where
+            [?s :shot/user _]]
+          @conn))))
 
   (d/q '[:find (pull ?u [*]) .
          :in $ ?email

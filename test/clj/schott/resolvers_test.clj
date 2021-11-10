@@ -50,13 +50,20 @@
       (is (= {:user/id nil
               :user/email nil} user)))))
 
+(defn user-fixture []
+  (let [response (parser {} [{`(schott.resolvers/create-user {:user/email ~(str (java.util.UUID/randomUUID) "@example.com")
+                                                              :user/password "password"})
+                              [:user/id :user/email]}])]
+    (get response 'schott.resolvers/create-user)))
+
 (deftest create-shot
   (testing "should create a new shot"
     (let [data {:shot/created-at #inst "2021-11-08T12:00:00Z"
                 :shot/in 18.0
                 :shot/out 36.0
                 :shot/duration 25.0}
-          response (parser {} [{`(schott.resolvers/create-shot ~data)
-                                (into [] (keys data))}])
+          user (user-fixture)
+          response (parser {:schott.authed/user user} [{`(schott.resolvers/create-shot ~data)
+                                                        (into [] (conj (keys data) {:shot/user [:user/id]}))}])
           shot (get response 'schott.resolvers/create-shot)]
-      (is (= shot data)))))
+      (is (= (assoc data :shot/user {:user/id (:user/id user)}) shot)))))

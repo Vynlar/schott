@@ -47,14 +47,17 @@
 (pc/defresolver shot-from-id
   [{conn :db/conn} {:shot/keys [id]}]
   {::pc/input #{:shot/id}
-   ::pc/output [:shot/in :shot/out :shot/created-at :shot/duration]}
+   ::pc/output [:shot/in :shot/out :shot/created-at :shot/duration {:shot/user [:user:id]}]}
   (db/get-shot-by-id conn id))
 
-(pc/defmutation create-shot [{:db/keys [conn]} params]
+(pc/defmutation create-shot [{:db/keys [conn]
+                              :schott.authed/keys [user]} params]
   {::pc/sym `create-shot
    ::pc/params [:shot/in :shot/out :shot/duration]
    ::pc/output [:shot/id]}
-  (db/create-shot conn params))
+  (db/create-shot conn (assoc params :shot/user [:user/id (:user/id user)])))
+
+;; TODO put the current user's id into the shot record in the DB
 
 (def registry [user-from-email user-from-id create-user login create-shot shot-from-id])
 
