@@ -57,7 +57,7 @@
   (let [email (rf/subscribe [:login/email])
         password (rf/subscribe [:login/password])
         message (rf/subscribe [:login/message])]
-    [:form {:on-submit (with-default-prevented (fn [_] (rf/dispatch [:login/submit-eql])))}
+    [:form {:on-submit (with-default-prevented (fn [_] (rf/dispatch [:login/submit])))}
      [:label {:for :email} "Email"]
      [:input {:id :email :type "email" :value @email :onChange #(rf/dispatch [:login/change-email (target-value %)])}]
      [:label {:for :password} "Password"]

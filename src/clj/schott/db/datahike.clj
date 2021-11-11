@@ -111,6 +111,15 @@
           [?u :shot/id ?id]]
         @conn id)))
 
+(defn get-shots-by-user [{:user/keys [id]}]
+  (d/q '[:find [?sid ...]
+         :in $ ?uid
+         :where
+         [?s :shot/id ?sid]
+         [?s :shot/user ?u]
+         [?u :user/id ?uid]]
+       @conn id))
+
 (comment
   (d/transact conn [{:user/email "blarp@example.com"
                      :user/hashed-password (hashers/derive "password")}])
@@ -133,6 +142,8 @@
                      :shot/out 36.5
                      :shot/duration 25.0
                      :shot/user [:user/email "three@example.com"]})
+
+  (get-shots-by-user {:user/id #uuid "48bf6e0e-b282-4deb-ae85-9a2ab6fad35a"})
 
   (get-shot-by-id
    (:shot/id

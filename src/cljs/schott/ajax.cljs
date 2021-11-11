@@ -29,6 +29,10 @@
          (ajax/to-interceptor {:name "default headers"
                                :request default-headers})))
 
+(defn with-token [token req]
+  (let [headers (get req :headers {})]
+    (assoc req :headers (assoc headers :Authorization (str "Token " token)))))
+
 (defn eql-req [{:keys [eql on-success on-failure]}]
   (as-transit
    {:method :post

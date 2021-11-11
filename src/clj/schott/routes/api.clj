@@ -3,9 +3,11 @@
             [schott.resolvers :refer [parser]]
             [ring.util.http-response :as response]))
 
-(defn handle-eql [{:keys [params]}]
+(defn handle-eql [{:keys [params] :as req}]
   (let [eql (:eql params)
-        res (parser {} eql)]
+        user (get req :identity)
+        res (parser {:schott.authed/user user
+                     :ring/request req} eql)]
     (response/ok res)))
 
 (defn api-routes []

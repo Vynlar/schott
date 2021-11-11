@@ -2,7 +2,7 @@
   (:require
    [re-frame.core :as rf]
    [ajax.core :as ajax]
-   [schott.ajax :refer [as-transit eql-req]]
+   [schott.ajax :refer [with-token eql-req]]
    [reitit.frontend.easy :as rfe]
    [reitit.frontend.controllers :as rfc]))
 
@@ -39,19 +39,30 @@
                  :response-format (ajax/raw-response-format)
                  :on-success       [:set-docs]}}))
 
+(rf/reg-event-fx
+ :home/fetch-shots
+ [(rf/inject-cofx :local-storage {:key :schott-auth-token})]
+ (fn [{:keys [schott-auth-token]} _]
+   {:http-xhrio
+    (with-token schott-auth-token
+      (eql-req {:eql [{:session/current-user [{:user/shots [:shot/id]}]}]
+                :on-success [:home/shots-response]}))}))
+
 (rf/reg-event-db
  :common/set-error
  (fn [db [_ error]]
    (assoc db :common/error error)))
+
 (rf/reg-event-fx
  :page/init-home
  (fn [_ _]
-   {:dispatch [:fetch-docs]}))
+   {:fx [[:dispatch [:fetch-docs]]
+         [:dispatch [:home/fetch-shots]]]}))
 
-(rf/reg-event-db
+(rf/reg-event-fx
  :page/init-login
- (fn [db _]
-   (assoc db :login {:email "" :password "" :message nil})))
+ (fn [{:keys [db]} _]
+   {:db (assoc db :login {:email "" :password "" :message nil})}))
 
 (rf/reg-event-db
  :login/change-email
@@ -72,23 +83,36 @@
 (rf/reg-event-fx
  :login/submit-response
  (fn [{:keys [db]} [_ response]]
-   (let [user (get response 'schott.resolvers/login)]
-     (if user
-       {:fx [[:dispatch [:common/navigate! :home]]]}
+   (let [login-response (get response 'schott.resolvers/login)
+         token (:session/token login-response)]
+     (if token
+       {:fx [[:dispatch [:common/navigate! :home]]
+             [:local-storage {:key :schott-auth-token :value token}]]}
        {:db (assoc-in db [:login :message] "Invalid email or password")}))))
 
 (rf/reg-event-fx
- :login/submit-eql
+ :login/submit
  (fn [{:keys [db]} _]
    {:http-xhrio
     (let [{:keys [email password]} (get db :login)]
       (eql-req {:eql [{`(schott.resolvers/login {:user/email ~email
                                                  :user/password ~password})
-                       [:user/id :user/email]}]
+                       [:user/id :user/email :session/token]}]
                 :on-success [:login/submit-response]}))}))
 
+(rf/reg-fx
+ :local-storage
+ (fn [{:keys [key value]}]
+   (.setItem (. js/window -localStorage) (name key) value)))
+
+(rf/reg-cofx
+ :local-storage
+ (fn [coeffects {:keys [key]}]
+   (let [value (.getItem (. js/window -localStorage) (name key))]
+     (assoc coeffects key value))))
+
 (comment
-  (rf/dispatch [:common/navigate! :home]))
+  (rf/dispatch [:page/init-home]))
 
 ;;subscriptions
 

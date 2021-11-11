@@ -2,7 +2,8 @@
   (:require
    [clojure.test :refer :all]
    [schott.resolvers :refer [parser]]
-   [schott.test_helpers :refer [with-test-db]]))
+   [schott.test_helpers :refer [with-test-db]]
+   [schott.db.datahike :as db]))
 
 (use-fixtures :each (with-test-db))
 
@@ -67,3 +68,17 @@
                                                         (into [] (conj (keys data) {:shot/user [:user/id]}))}])
           shot (get response 'schott.resolvers/create-shot)]
       (is (= (assoc data :shot/user {:user/id (:user/id user)}) shot)))))
+
+(comment
+  (def test-user (user-fixture))
+  (tap> test-user)
+  (let [test-token
+        (get-in (parser {} [`(schott.resolvers/login {:user/email ~(:user/email test-user) :user/password "password"})]) ['schott.resolvers/login :session/token])]
+    (parser {:schott.authed/user test-user
+             :ring/request {:headers {"Authorization" (str "Token " test-token)}}
+             :db/conn db/conn}
+            [`(schott.resolvers/create-shot {:shot/created-at #inst "2021-11-08T12:00:00Z"
+                                             :shot/in 18.0
+                                             :shot/out 36.0
+                                             :shot/duration 25.0})
+             {[:user/id (:user/id test-user)] [{:user/shots [:shot/id]}]}])))

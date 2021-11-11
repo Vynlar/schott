@@ -13,7 +13,7 @@
    [buddy.auth.middleware :refer [wrap-authentication wrap-authorization]]
    [buddy.auth.accessrules :refer [restrict]]
    [buddy.auth :refer [authenticated?]]
-   [buddy.auth.backends.session :refer [session-backend]]))
+   [buddy.auth.backends :as buddy-backends]))
 
 (defn wrap-internal-error [handler]
   (fn [req]
@@ -49,11 +49,13 @@
   (restrict handler {:handler authenticated?
                      :on-error on-error}))
 
+(def auth-backend (buddy-backends/jws {:secret (:schott.auth/secret env)
+                                       :options {:alg :hs512}}))
+
 (defn wrap-auth [handler]
-  (let [backend (session-backend)]
-    (-> handler
-        (wrap-authentication backend)
-        (wrap-authorization backend))))
+  (-> handler
+      (wrap-authentication auth-backend)
+      (wrap-authorization auth-backend)))
 
 (defn wrap-base [handler]
   (-> ((:middleware defaults) handler)
