@@ -5,7 +5,7 @@
 
 (defn handle-eql [{:keys [params] :as req}]
   (let [eql (:eql params)
-        user (get req :identity)
+        user (update (get req :identity) :user/id #(java.util.UUID/fromString %))
         res (parser {:schott.authed/user user
                      :ring/request req} eql)]
     (response/ok res)))

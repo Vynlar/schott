@@ -71,7 +71,6 @@
 
 (comment
   (def test-user (user-fixture))
-  (tap> test-user)
   (let [test-token
         (get-in (parser {} [`(schott.resolvers/login {:user/email ~(:user/email test-user) :user/password "password"})]) ['schott.resolvers/login :session/token])]
     (parser {:schott.authed/user test-user

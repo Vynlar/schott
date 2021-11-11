@@ -40,13 +40,38 @@
                  :on-success       [:set-docs]}}))
 
 (rf/reg-event-fx
- :home/fetch-shots
+ :shots/fetch-all
  [(rf/inject-cofx :local-storage {:key :schott-auth-token})]
  (fn [{:keys [schott-auth-token]} _]
    {:http-xhrio
     (with-token schott-auth-token
-      (eql-req {:eql [{:session/current-user [{:user/shots [:shot/id]}]}]
-                :on-success [:home/shots-response]}))}))
+      (eql-req {:eql [{:session/current-user [{:user/shots [:shot/id
+                                                            :shot/in
+                                                            :shot/out
+                                                            :shot/duration]}]}]
+
+                :on-success [:shots/fetch-all-response]}))}))
+
+(rf/reg-event-db
+ :shots/fetch-all-response
+ (fn [db [_ res]]
+   (let [shots (get-in res [:session/current-user :user/shots])]
+     (assoc db :shots/all shots))))
+
+(rf/reg-event-fx
+ :home/create-shot
+ [(rf/inject-cofx :local-storage {:key :schott-auth-token})]
+ (fn [{:keys [schott-auth-token]} _]
+   {:http-xhrio
+    (with-token schott-auth-token
+      (eql-req {:eql [{`(schott.resolvers/create-shot {:shot/in 18.01
+                                                       :shot/out 36.01
+                                                       :shot/duration 25.01})
+                       [:shot/id]}]
+                :on-success [:home/create-shot-response]}))}))
+
+(comment
+  (rf/dispatch [:home/create-shot]))
 
 (rf/reg-event-db
  :common/set-error
@@ -55,9 +80,10 @@
 
 (rf/reg-event-fx
  :page/init-home
- (fn [_ _]
-   {:fx [[:dispatch [:fetch-docs]]
-         [:dispatch [:home/fetch-shots]]]}))
+ (fn [{:keys [db]} _]
+   {:db (merge db {:shots/all []})
+    :fx [[:dispatch [:fetch-docs]]
+         [:dispatch [:shots/fetch-all]]]}))
 
 (rf/reg-event-fx
  :page/init-login
@@ -111,9 +137,6 @@
    (let [value (.getItem (. js/window -localStorage) (name key))]
      (assoc coeffects key value))))
 
-(comment
-  (rf/dispatch [:page/init-home]))
-
 ;;subscriptions
 
 (rf/reg-sub
@@ -157,3 +180,8 @@
  :login/message
  (fn [db _]
    (get-in db [:login :message])))
+
+(rf/reg-sub
+ :shots/all
+ (fn [db _]
+   (get db :shots/all)))

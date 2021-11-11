@@ -41,9 +41,16 @@
    [:img {:src "/img/warning_clojure.png"}]])
 
 (defn home-page []
-  [:section.section>div.container>div.content
-   (when-let [docs @(rf/subscribe [:docs])]
-     [:div {:dangerouslySetInnerHTML {:__html (md->html docs)}}])])
+  (let [shots @(rf/subscribe [:shots/all])]
+    [:div
+     [:h2 "Shots"]
+     [:ul
+      (for [{:shot/keys [id in out duration]} shots]
+        ^{:key id}
+        [:li
+         [:div "In: " in]
+         [:div "Out: " out]
+         [:div "Time: " duration]])]]))
 
 (defn with-default-prevented [f]
   (fn [e]
