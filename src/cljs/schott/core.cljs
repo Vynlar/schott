@@ -14,6 +14,14 @@
    [clojure.string :as string])
   (:import goog.History))
 
+(defn target-value [e]
+  (.. e -target -value))
+
+(defn with-default-prevented [f]
+  (fn [e]
+    (.preventDefault e)
+    (f e)))
+
 (defn nav-link [uri title page]
   [:a.navbar-item
    {:href   uri
@@ -40,6 +48,25 @@
   [:section.section>div.container>div.content
    [:img {:src "/img/warning_clojure.png"}]])
 
+(defn create-shot-form []
+  (let [in @(rf/subscribe [:forms/field-value :create-shot :in])
+        out @(rf/subscribe [:forms/field-value :create-shot :out])
+        duration @(rf/subscribe [:forms/field-value :create-shot :duration])]
+    [:form {:on-submit (with-default-prevented (fn [_] (rf/dispatch [:create-shot/submit])))}
+     [:label {:for :create-shot-in} "Grams coffee in"]
+     [:input#create-shot-in {:type :number
+                             :value in
+                             :on-change #(rf/dispatch [:create-shot/update-in (target-value %)])}]
+     [:label {:for :create-shot-in} "Grams coffee out"]
+     [:input#create-shot-out {:type :number
+                              :value out
+                              :on-change #(rf/dispatch [:create-shot/update-out (target-value %)])}]
+     [:label {:for :create-shot-duration} "Grams coffee duration"]
+     [:input#create-shot-duration {:type :number
+                                   :value duration
+                                   :on-change #(rf/dispatch [:create-shot/update-duration (target-value %)])}]
+     [:button {:type :submit} "Create"]]))
+
 (defn home-page []
   (let [shots @(rf/subscribe [:shots/all])]
     [:div
@@ -50,15 +77,8 @@
         [:li
          [:div "In: " in]
          [:div "Out: " out]
-         [:div "Time: " duration]])]]))
-
-(defn with-default-prevented [f]
-  (fn [e]
-    (.preventDefault e)
-    (f e)))
-
-(defn target-value [e]
-  (.. e -target -value))
+         [:div "Time: " duration]])]
+     [create-shot-form]]))
 
 (defn login-page []
   (let [email (rf/subscribe [:login/email])

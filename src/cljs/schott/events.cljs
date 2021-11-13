@@ -4,7 +4,8 @@
    [ajax.core :as ajax]
    [schott.ajax :refer [with-token eql-req]]
    [reitit.frontend.easy :as rfe]
-   [reitit.frontend.controllers :as rfc]))
+   [reitit.frontend.controllers :as rfc]
+   [reagent.core :as r]))
 
 ;;dispatchers
 
@@ -59,19 +60,46 @@
      (assoc db :shots/all shots))))
 
 (rf/reg-event-fx
- :home/create-shot
+ :create-shot/submit
  [(rf/inject-cofx :local-storage {:key :schott-auth-token})]
- (fn [{:keys [schott-auth-token]} _]
-   {:http-xhrio
-    (with-token schott-auth-token
-      (eql-req {:eql [{`(schott.resolvers/create-shot {:shot/in 18
-                                                       :shot/out 36
-                                                       :shot/duration 25})
-                       [:shot/id]}]
-                :on-success [:home/create-shot-response]}))}))
+ (fn [{:keys [schott-auth-token db]} _]
+   (let [{:keys [in out duration]} (get-in db [:forms :create-shot])]
+     {:http-xhrio
+      (with-token schott-auth-token
+        (eql-req {:eql [{`(schott.resolvers/create-shot {:shot/in ~(js/parseFloat in)
+                                                         :shot/out ~(js/parseFloat out)
+                                                         :shot/duration ~(js/parseFloat duration)})
+                         [:shot/id]}]
+                  :on-success [:create-shot/response]}))})))
 
-(comment
-  (rf/dispatch [:home/create-shot]))
+(rf/reg-event-fx
+ :create-shot/response
+ (fn [cofx res]
+   {:fx [[:dispatch [:create-shot/init-form]]
+         [:dispatch [:shots/fetch-all]]]}))
+
+(rf/reg-event-db
+ :create-shot/init-form
+ (fn [db _]
+   (assoc-in db [:forms :create-shot]
+             {:in "18"
+              :out ""
+              :duration ""})))
+
+(rf/reg-event-db
+ :create-shot/update-in
+ (fn [db [_ new-value]]
+   (assoc-in db [:forms :create-shot :in] new-value)))
+
+(rf/reg-event-db
+ :create-shot/update-out
+ (fn [db [_ new-value]]
+   (assoc-in db [:forms :create-shot :out] new-value)))
+
+(rf/reg-event-db
+ :create-shot/update-duration
+ (fn [db [_ new-value]]
+   (assoc-in db [:forms :create-shot :duration] new-value)))
 
 (rf/reg-event-db
  :common/set-error
@@ -83,7 +111,8 @@
  (fn [{:keys [db]} _]
    {:db (merge db {:shots/all []})
     :fx [[:dispatch [:fetch-docs]]
-         [:dispatch [:shots/fetch-all]]]}))
+         [:dispatch [:shots/fetch-all]]
+         [:dispatch [:create-shot/init-form]]]}))
 
 (rf/reg-event-fx
  :page/init-login
@@ -185,3 +214,8 @@
  :shots/all
  (fn [db _]
    (get db :shots/all)))
+
+(rf/reg-sub
+ :forms/field-value
+ (fn [db [_ form-name field-name]]
+   (get-in db [:forms form-name field-name] "")))
