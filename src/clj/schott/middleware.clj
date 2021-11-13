@@ -49,13 +49,14 @@
   (restrict handler {:handler authenticated?
                      :on-error on-error}))
 
-(def auth-backend (buddy-backends/jws {:secret (:schott.auth/secret env)
-                                       :options {:alg :hs512}}))
+(defn get-auth-backend [] (buddy-backends/jws {:secret (:schott.auth/secret env)
+                                               :options {:alg :hs512}}))
 
 (defn wrap-auth [handler]
-  (-> handler
-      (wrap-authentication auth-backend)
-      (wrap-authorization auth-backend)))
+  (let [auth-backend (get-auth-backend)]
+    (-> handler
+        (wrap-authentication auth-backend)
+        (wrap-authorization auth-backend))))
 
 (defn wrap-base [handler]
   (-> ((:middleware defaults) handler)

@@ -3,9 +3,13 @@
             [schott.resolvers :refer [parser]]
             [ring.util.http-response :as response]))
 
+(defn get-user [req]
+  (when-let [user (get req :identity)]
+    (update user :user/id #(java.util.UUID/fromString %))))
+
 (defn handle-eql [{:keys [params] :as req}]
   (let [eql (:eql params)
-        user (update (get req :identity) :user/id #(java.util.UUID/fromString %))
+        user (get-user req)
         res (parser {:schott.authed/user user
                      :ring/request req} eql)]
     (response/ok res)))
