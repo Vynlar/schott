@@ -64,9 +64,9 @@
  (fn [{:keys [schott-auth-token]} _]
    {:http-xhrio
     (with-token schott-auth-token
-      (eql-req {:eql [{`(schott.resolvers/create-shot {:shot/in 18.01
-                                                       :shot/out 36.01
-                                                       :shot/duration 25.01})
+      (eql-req {:eql [{`(schott.resolvers/create-shot {:shot/in 18
+                                                       :shot/out 36
+                                                       :shot/duration 25})
                        [:shot/id]}]
                 :on-success [:home/create-shot-response]}))}))
 

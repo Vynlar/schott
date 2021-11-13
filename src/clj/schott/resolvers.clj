@@ -64,13 +64,17 @@
     {:session/current-user user}))
 
 (pc/defmutation create-shot [{:db/keys [conn]
-                              :schott.authed/keys [user] :as env} params]
+                              :schott.authed/keys [user] :as env}
+                             {:shot/keys [in out duration]}]
   {::pc/sym `create-shot
    ::pc/params [:shot/in :shot/out :shot/duration]
    ::pc/output [:shot/id]}
   (when-not (authenticated? (:ring/request env))
     (throw-unauthorized))
-  (db/create-shot conn (assoc params :shot/user [:user/id (:user/id user)])))
+  (db/create-shot conn (assoc {:shot/in (double in)
+                               :shot/out (double out)
+                               :shot/duration (double duration)}
+                              :shot/user [:user/id (:user/id user)])))
 
 (def registry [user-from-email user-from-id create-user login create-shot shot-from-id shots-by-user current-user])
 
