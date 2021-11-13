@@ -102,6 +102,12 @@
      (d/transact conn [tx])
      {:shot/id id})))
 
+(defn delete-shot
+  ([params] (delete-shot conn params))
+  ([conn params]
+   (let [shot-id (:shot/id params)]
+     (d/transact conn [[:db/retractEntity [:shot/id shot-id]]]))))
+
 (defn get-shot-by-id
   ([id] (get-shot-by-id conn id))
   ([conn id]
@@ -142,8 +148,6 @@
                      :shot/out 36.5
                      :shot/duration 25.0
                      :shot/user [:user/email "three@example.com"]})
-
-  (get-shots-by-user {:user/id #uuid "48bf6e0e-b282-4deb-ae85-9a2ab6fad35a"})
 
   (get-shot-by-id
    (:shot/id

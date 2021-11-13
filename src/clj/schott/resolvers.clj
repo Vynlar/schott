@@ -50,7 +50,7 @@
 (pc/defresolver shot-from-id
   [{conn :db/conn} {:shot/keys [id]}]
   {::pc/input #{:shot/id}
-   ::pc/output [:shot/in :shot/out :shot/created-at :shot/duration {:shot/user [:user/id]}]}
+   ::pc/output [:shot/in :shot/out :shot/duration :shot/created-at {:shot/user [:user/id]}]}
   (db/get-shot-by-id conn id))
 
 (pc/defresolver shots-by-user [_ params]
@@ -71,18 +71,32 @@
    ::pc/output [:shot/id]}
   (when-not (authenticated? (:ring/request env))
     (throw-unauthorized))
-  (db/create-shot conn (assoc {:shot/in (double in)
-                               :shot/out (double out)
-                               :shot/duration (double duration)}
-                              :shot/user [:user/id (:user/id user)])))
+  (db/create-shot conn {:shot/in (double in)
+                        :shot/out (double out)
+                        :shot/duration (double duration)
+                        :shot/created-at (java.util.Date.)
+                        :shot/user [:user/id (:user/id user)]}))
 
-(def registry [user-from-email user-from-id create-user login create-shot shot-from-id shots-by-user current-user])
+(pc/defmutation delete-shot [{:db/keys [conn]
+                              :schott.authed/keys [user] :as env}
+                             params]
+  {::pc/sym `delete-shot
+   ::pc/params [:shot/in]
+   ::pc/output [:flash/message]}
+  ;; TODO restrict users to only delete their own shots
+  (when-not (authenticated? (:ring/request env))
+    (throw-unauthorized))
+  (db/delete-shot params)
+  {:flash/message "Deleted shot"})
+
+(def registry [user-from-email user-from-id create-user login create-shot shot-from-id shots-by-user current-user delete-shot])
 
 (defstate parser
   :start (p/parser {::p/env {::p/reader [p/map-reader
                                          pc/reader2
                                          pc/open-ident-reader
                                          p/env-placeholder-reader]
+                             ::pc/mutation-join-globals [:flash/message]
                              ::p/placeholder-prefixes #{">"}
                              :db/conn db/conn}
 

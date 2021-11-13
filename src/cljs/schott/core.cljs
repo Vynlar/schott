@@ -72,12 +72,14 @@
     [:div
      [:h2 "Shots"]
      [:ul
-      (for [{:shot/keys [id in out duration]} shots]
+      (for [{:shot/keys [id in out duration created-at] :as shot} shots]
         ^{:key id}
         [:li
+         [:div "Date: " (str created-at)]
          [:div "In: " in]
          [:div "Out: " out]
-         [:div "Time: " duration]])]
+         [:div "Time: " duration]
+         [:button {:on-click #(rf/dispatch [:shots/delete shot])} "Delete"]])]
      [create-shot-form]]))
 
 (defn login-page []

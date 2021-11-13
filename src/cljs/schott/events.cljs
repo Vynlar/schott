@@ -49,9 +49,20 @@
       (eql-req {:eql [{:session/current-user [{:user/shots [:shot/id
                                                             :shot/in
                                                             :shot/out
-                                                            :shot/duration]}]}]
+                                                            :shot/duration
+                                                            :shot/created-at]}]}]
 
                 :on-success [:shots/fetch-all-response]}))}))
+
+(rf/reg-event-fx
+ :shots/delete
+ [(rf/inject-cofx :local-storage {:key :schott-auth-token})]
+ (fn [{:keys [schott-auth-token]} [_ {:shot/keys [id]}]]
+   {:http-xhrio
+    (with-token schott-auth-token
+      (eql-req {:eql [`(schott.resolvers/delete-shot {:shot/id ~id})]
+
+                :on-success [:shots/fetch-all]}))}))
 
 (rf/reg-event-db
  :shots/fetch-all-response
