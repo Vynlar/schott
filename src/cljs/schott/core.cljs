@@ -41,12 +41,7 @@
      [:div#nav-menu.navbar-menu
       {:class (when @expanded? :is-active)}
       [:div.navbar-start
-       [nav-link "#/" "Home" :home]
-       [nav-link "#/about" "About" :about]]]]))
-
-(defn about-page []
-  [:section.section>div.container>div.content
-   [:img {:src "/img/warning_clojure.png"}]])
+       [nav-link "#/" "Home" :home]]]]))
 
 (defn create-shot-form []
   (let [in @(rf/subscribe [:forms/field-value :create-shot :in])
@@ -108,8 +103,6 @@
    [["/" {:name        :home
           :view        #'home-page
           :controllers [{:start (fn [_] (rf/dispatch [:page/init-home]))}]}]
-    ["/about" {:name :about
-               :view #'about-page}]
     ["/login" {:name :login
                :view #'login-page
                :controllers [{:start (fn [_] (rf/dispatch [:page/init-login]))}]}]]))

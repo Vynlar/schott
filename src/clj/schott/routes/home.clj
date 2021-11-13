@@ -14,11 +14,4 @@
   [""
    {:middleware [#_middleware/wrap-csrf
                  middleware/wrap-formats]}
-   ["/" {:get home-page}]
-   ["/docs" {:get (fn [_]
-                    (-> (response/ok (-> "docs/docs.md" io/resource slurp))
-                        (response/header "Content-Type" "text/plain; charset=utf-8")))}]
-   ["/app" {:middleware [middleware/wrap-restricted]
-            :get (fn [_]
-                   (-> (response/ok (-> "docs/docs.md" io/resource slurp))
-                       (response/header "Content-Type" "text/plain; charset=utf-8")))}]])
+   ["/" {:get home-page}]])
