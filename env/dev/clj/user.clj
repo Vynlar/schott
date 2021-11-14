@@ -9,6 +9,7 @@
    [mount.core :as mount]
    [schott.config :refer [env]]
    [schott.core]
+   [kaocha.repl :as k]
    [schott.db.core]
    [schott.db.datahike]
    [shadow.cljs.devtools.server :as shadow-server]))

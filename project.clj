@@ -59,7 +59,8 @@
   :target-path "target/%s/"
   :main ^:skip-aot schott.core
 
-  :aliases {"dev" ["with-profile" "+dev" "repl" ":headless"]}
+  :aliases {"dev" ["with-profile" "+dev" "repl" ":headless"]
+            "kaocha" ["run" "-m" "kaocha.runner"]}
 
   :plugins []
   :clean-targets ^{:protect false}
@@ -85,6 +86,7 @@
                                  [prone "2021-04-23"]
                                  [re-frisk "1.5.1"]
                                  [ring/ring-devel "1.9.4"]
+                                 [lambdaisland/kaocha "1.60.945"]
                                  [ring/ring-mock "0.4.0"]]
                   :plugins      [[com.jakemccrary/lein-test-refresh "0.24.1"]
                                  [jonase/eastwood "0.3.5"]
