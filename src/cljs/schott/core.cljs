@@ -15,6 +15,14 @@
   ([text]
    [:<> text]))
 
+(o/defstyled shot-card :article
+  :bg-gray-100 :rounded-lg
+  ([{:shot/keys [in out duration created-at]}]
+   [:<>
+    [:div in]
+    [:div out]
+    [:div duration]]))
+
 (defn target-value [e]
   (.. e -target -value))
 
@@ -67,16 +75,10 @@
   (let [shots @(rf/subscribe [:shots/all])]
     [:div
      [:h2 "Shots"]
-     [button "wow"]
-     [:ul
-      (for [{:shot/keys [id in out duration created-at] :as shot} shots]
+     [:section
+      (for [{:shot/keys [id] :as shot} shots]
         ^{:key id}
-        [:li
-         [:div "Date: " (str created-at)]
-         [:div "In: " in]
-         [:div "Out: " out]
-         [:div "Time: " duration]
-         [:button {:on-click #(rf/dispatch [:shots/delete shot])} "Delete"]])]
+        [shot-card shot])]
      [create-shot-form]]))
 
 (defn login-page []
