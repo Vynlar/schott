@@ -12,6 +12,7 @@
                  [clojure.java-time "0.3.3"]
                  [com.cognitect/transit-clj "1.0.324"]
                  [com.cognitect/transit-cljs "0.8.269"]
+                 [com.lambdaisland/ornament "0.1.12"]
                  [conman "0.9.1"]
                  [cprop "0.1.19"]
                  [day8.re-frame/http-fx "0.2.3"]

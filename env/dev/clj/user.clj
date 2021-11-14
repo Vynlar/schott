@@ -20,6 +20,9 @@
 (defn start-shadow []
   (shadow-server/start!))
 
+(defn stop-shadow []
+  (shadow-server/stop!))
+
 (defn start
   "Starts application.
   You'll usually want to run this on startup."

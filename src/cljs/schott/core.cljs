@@ -1,18 +1,19 @@
 (ns schott.core
   (:require
    [day8.re-frame.http-fx]
-   [reagent.dom :as rdom]
-   [reagent.core :as r]
    [re-frame.core :as rf]
-   [goog.events :as events]
-   [goog.history.EventType :as HistoryEventType]
-   [markdown.core :refer [md->html]]
-   [schott.ajax :as ajax]
-   [schott.events]
+   [reagent.core :as r]
+   [reagent.dom :as rdom]
+   [lambdaisland.ornament :as o]
    [reitit.core :as reitit]
    [reitit.frontend.easy :as rfe]
-   [clojure.string :as string])
-  (:import goog.History))
+   [schott.ajax :as ajax]
+   [schott.events]))
+
+(o/defstyled button :button
+  :text-purple-500
+  ([text]
+   [:<> text]))
 
 (defn target-value [e]
   (.. e -target -value))
@@ -66,6 +67,7 @@
   (let [shots @(rf/subscribe [:shots/all])]
     [:div
      [:h2 "Shots"]
+     [button "wow"]
      [:ul
       (for [{:shot/keys [id in out duration created-at] :as shot} shots]
         ^{:key id}
