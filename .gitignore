@@ -18,3 +18,4 @@ profiles.clj
 
 /.lsp/
 /.clj-kondo/.cache/
+/.cpcache/

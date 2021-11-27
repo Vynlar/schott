@@ -2,6 +2,9 @@
   (:require
    [day8.re-frame.http-fx]
    [re-frame.core :as rf]
+   [cljs-time.core :as time]
+   [cljs-time.format :as time-format]
+   [cljs-time.coerce :as time-coerce]
    [reagent.core :as r]
    [reagent.dom :as rdom]
    [hiccup-icons.fa :as fa]
@@ -14,8 +17,10 @@
 (o/defstyled button :button
   :text-purple-500)
 
-(o/defstyled container :div :bg-amber-100)
-(o/defstyled page-container :div :px-4 :md:px-6 :py-5 :max-w-screen-md :mx-auto :bg-white :rounded-t-3xl :space-y-10)
+(o/defstyled container :div :bg-amber-100 :min-h-screen :md:pb-10)
+(o/defstyled page-container :div
+  :px-4 :md:px-6 :py-5 :max-w-screen-md :mx-auto
+  :bg-white :rounded-t-3xl :md:rounded-b-3xl :space-y-10)
 (o/defstyled page-section :section
   :space-y-2)
 (o/defstyled page-header :h1 :font-bold :block :text-lg)
@@ -23,7 +28,7 @@
 
 (o/defstyled shot-grid :div :grid :gap-3 :grid-cols-1 :md:grid-cols-2)
 (o/defstyled shot-card :article
-  :font-bold
+  :self-start
   :text-black
   :bg-white
   :border-1
@@ -44,6 +49,7 @@
   :rounded-t-lg
   :border-b-1
   :border-amber-200
+  :flex :justify-between :items-center
   :text-sm :text-black :px-3 :py-2 :bg-amber-100)
 (o/defstyled shot-card-value :span
   {:grid-area "value"})
@@ -68,12 +74,12 @@
     :class (when (= page @(rf/subscribe [:common/page-id])) :is-active)}
    title])
 
-(o/defstyled navbar-container :nav :p-4 :flex :items-center :space-x-2)
+(o/defstyled navbar-container :nav :p-4 :flex :items-center :space-x-2 :max-w-screen-md :mx-auto)
 
 (defn navbar []
   [navbar-container
    fa/coffee-solid
-   [:a {:href "/"} [page-header  "shot"]]])
+   [:a {:href "/"} [page-header  "Espresso Logbook"]]])
 
 (o/defstyled form-container :div
   :space-y-4 :bg-gray-100 :p-3 :rounded-lg
@@ -131,6 +137,58 @@
     [page-description "Record a new shot"]]
    [create-shot-form]])
 
+(def date-formatter (time-format/formatter "dd MMM yyyy"))
+
+(o/defstyled shot-card-details :div
+  :space-y-4
+  :border-t :border-gray-200 :px-3 :py-2)
+
+(o/defstyled shot-card-details-label :div
+  :font-bold)
+
+(o/defstyled tag-container :div
+  :py-1
+  :flex :flex-wrap
+  :gap-2)
+
+(o/defstyled tag :div
+  :bg-amber-100 :border :border-amber-300 :uppercase :rounded-sm
+  :font-bold
+  :text-amber-700
+  :text-sm :px-1)
+
+(defn shot-card-container [shot]
+  (r/with-let [expanded? (r/atom true)]
+    (let [{:shot/keys [in out duration created-at]} shot]
+      [shot-card {:on-click #(swap! expanded? not)}
+       [shot-card-header
+        (time-format/unparse date-formatter (time-coerce/from-date created-at))
+        (if @expanded? fa/caret-up-solid fa/caret-down-solid)]
+       [shot-card-values
+        [:<>
+         [shot-card-section
+          [shot-card-icon fa/balance-scale-solid]
+          [shot-card-label "In"]
+          [shot-card-value in "g"]]
+         [shot-card-section
+          [shot-card-icon fa/coffee-solid]
+          [shot-card-label "Out"]
+          [shot-card-value out "g"]]
+         [shot-card-section
+          [shot-card-icon fa/clock]
+          [shot-card-label "Time"]
+          [shot-card-value duration "g"]]]]
+       (when @expanded?
+         [shot-card-details
+          [:div
+           [shot-card-details-label "Beans"]
+           [:span "Youngblood Jet Setter"]]
+          [:div
+           [shot-card-details-label "Tags"]
+           [tag-container
+            [tag "Fast"]
+            [tag "Sour"]]]])])))
+
 (defn shot-list []
   (let [shots @(rf/subscribe [:shots/all])]
     [page-section
@@ -139,25 +197,7 @@
       [page-description "Your most recent shots"]]
      [shot-grid
       (for [{:shot/keys [id] :as shot} shots]
-        ^{:key id}
-        [shot-card
-         [shot-card-header "27 Nov 2021"]
-         [shot-card-values
-          (let [{:shot/keys [in out duration created-at]} shot]
-            (def created-at created-at)
-            [:<>
-             [shot-card-section
-              [shot-card-icon fa/balance-scale-solid]
-              [shot-card-label "In"]
-              [shot-card-value in "g"]]
-             [shot-card-section
-              [shot-card-icon fa/coffee-solid]
-              [shot-card-label "Out"]
-              [shot-card-value out "g"]]
-             [shot-card-section
-              [shot-card-icon fa/clock]
-              [shot-card-label "Time"]
-              [shot-card-value duration "g"]]])]])]]))
+        ^{:key id} [shot-card-container shot])]]))
 
 (defn home-page []
   [page-container
