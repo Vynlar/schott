@@ -84,7 +84,7 @@
    ::pc/params [:shot/in]
    ::pc/output [:flash/message]}
   ;; TODO restrict users to only delete their own shots
-  (when-not (authenticated? (:ring/request env))
+  (when-not (and (authenticated? (:ring/request env)) (db/shot-owned-by? params user))
     (throw-unauthorized))
   (db/delete-shot params)
   {:flash/message "Deleted shot"})

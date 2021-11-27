@@ -4,6 +4,7 @@
    [re-frame.core :as rf]
    [reagent.core :as r]
    [reagent.dom :as rdom]
+   [hiccup-icons.fa :as fa]
    [lambdaisland.ornament :as o]
    [reitit.core :as reitit]
    [reitit.frontend.easy :as rfe]
@@ -11,17 +12,42 @@
    [schott.events]))
 
 (o/defstyled button :button
-  :text-purple-500
-  ([text]
-   [:<> text]))
+  :text-purple-500)
 
+(o/defstyled container :div :bg-amber-100)
+(o/defstyled page-container :div :px-4 :md:px-6 :py-5 :max-w-screen-md :mx-auto :bg-white :rounded-t-3xl :space-y-3)
+(o/defstyled shot-grid :section :grid :gap-3 :grid-cols-1 :md:grid-cols-2)
 (o/defstyled shot-card :article
-  :bg-gray-100 :rounded-lg
-  ([{:shot/keys [in out duration created-at]}]
-   [:<>
-    [:div in]
-    [:div out]
-    [:div duration]]))
+  :font-bold
+  :text-black
+  :bg-white
+  :border-1
+  :border-b-4
+  :border-amber-300
+  :rounded-lg)
+(o/defstyled shot-card-values :div
+  :grid
+  :grid-cols-3)
+(o/defstyled shot-card-label :div
+  :flex :gap-1 :items-center :font-bold :text-gray-800
+  {:grid-area "label"})
+(o/defstyled shot-card-icon :span
+  :text-gray-600 :self-center
+  :pl-2 :pr-1
+  {:grid-area "icon"})
+(o/defstyled shot-card-header :div
+  :rounded-t-lg
+  :border-b-1
+  :border-amber-200
+  :text-sm :text-black :px-3 :py-2 :bg-amber-100)
+(o/defstyled shot-card-value :span
+  {:grid-area "value"})
+(o/defstyled shot-card-section :div
+  :font-normal :p-2
+  :grid :gap-x-1
+  {:grid-template-areas [["icon" "label"]
+                         ["icon"    "value"]]
+   :grid-template-columns "auto 1fr"})
 
 (defn target-value [e]
   (.. e -target -value))
@@ -37,9 +63,11 @@
     :class (when (= page @(rf/subscribe [:common/page-id])) :is-active)}
    title])
 
+(o/defstyled navbar-container :nav :p-4)
+
 (defn navbar []
   (r/with-let [expanded? (r/atom false)]
-    [:nav.navbar.is-info>div.container
+    [navbar-container
      [:div.navbar-brand
       [:a.navbar-item {:href "/" :style {:font-weight :bold}} "schott"]
       [:span.navbar-burger.burger
@@ -71,14 +99,33 @@
                                    :on-change #(rf/dispatch [:create-shot/update-duration (target-value %)])}]
      [:button {:type :submit} "Create"]]))
 
+(o/defstyled page-header :h1 :font-bold :block)
+
 (defn home-page []
   (let [shots @(rf/subscribe [:shots/all])]
-    [:div
-     [:h2 "Shots"]
-     [:section
+    [page-container
+     [page-header "Shots"]
+     [shot-grid
       (for [{:shot/keys [id] :as shot} shots]
         ^{:key id}
-        [shot-card shot])]
+        [shot-card
+         [shot-card-header "27 Nov 2021"]
+         [shot-card-values
+          (let [{:shot/keys [in out duration created-at]} shot]
+            [:<>
+             [shot-card-section
+              [shot-card-icon fa/balance-scale-solid]
+              [shot-card-label "In"]
+              [shot-card-value in "g"]]
+             [shot-card-section
+              [shot-card-icon fa/coffee-solid]
+              [shot-card-label "Out"]
+              [shot-card-value out "g"]]
+             [shot-card-section
+              [shot-card-icon fa/clock]
+              [shot-card-label "Time"]
+              [shot-card-value duration "g"]]])]])]
+
      [create-shot-form]]))
 
 (defn login-page []
@@ -95,7 +142,7 @@
 
 (defn page []
   (if-let [page @(rf/subscribe [:common/page])]
-    [:div
+    [container
      [navbar]
      [page]]))
 

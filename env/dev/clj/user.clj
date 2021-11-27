@@ -10,6 +10,7 @@
    [schott.config :refer [env]]
    [schott.core]
    [kaocha.repl :as k]
+   [kaocha.watch :as kw]
    [schott.db.core]
    [schott.db.datahike]
    [shadow.cljs.devtools.server :as shadow-server]))

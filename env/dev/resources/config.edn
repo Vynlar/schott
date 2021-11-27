@@ -1,1 +1,2 @@
-{:schott.auth/secret "F4OSpiOzrQWYemGK7qBIJ8Tze79CKgwyZAfTLPbhmLlX5c2hNl6ghGs7NhhVwO4"}
+{:schott.auth/secret "F4OSpiOzrQWYemGK7qBIJ8Tze79CKgwyZAfTLPbhmLlX5c2hNl6ghGs7NhhVwO4"
+ :port 3000}

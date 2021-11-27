@@ -126,6 +126,18 @@
          [?u :user/id ?uid]]
        @conn id))
 
+(defn shot-owned-by? [shot user]
+  (let [shot-id (:shot/id shot)
+        user-id (:user/id user)
+        query-result (d/q '[:find ?sid .
+                            :in $ ?sid ?uid
+                            :where
+                            [?s :shot/id ?sid]
+                            [?s :shot/user ?u]
+                            [?u :user/id ?uid]]
+                          @conn shot-id user-id)]
+    (boolean query-result)))
+
 (comment
   (d/transact conn [{:user/email "blarp@example.com"
                      :user/hashed-password (hashers/derive "password")}])
@@ -134,6 +146,8 @@
          :where
          [?e :user/email ?email]]
        @conn)
+
+  (shot-owned-by? "3" "4") ; nil
 
   (test-conn "wow")
 

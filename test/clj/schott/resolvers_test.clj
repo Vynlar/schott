@@ -2,7 +2,7 @@
   (:require
    [clojure.test :refer :all]
    [schott.resolvers :refer [parser]]
-   [schott.test_helpers :refer [with-test-db]]
+   [schott.test-helpers :refer [with-test-db]]
    [kaocha.repl]
    [schott.db.datahike :as db]))
 
@@ -58,21 +58,40 @@
                               [:user/id :user/email]}])]
     (get response 'schott.resolvers/create-user)))
 
-(kaocha.repl/run
- (deftest create-shot
-   (testing "should create a new shot"
-     (let [data {:shot/in 18.0
-                 :shot/out 36.0
-                 :shot/duration 25.0}
-           user (user-fixture)
-           response (parser {:schott.authed/user user
-                             :ring/request {:identity user}} [{`(schott.resolvers/create-shot ~data)
-                                                               (-> [:shot/created-at]
-                                                                   (into (conj (keys data) {:shot/user [:user/id]})))}])
-           shot (get response 'schott.resolvers/create-shot)]
-       (is (= (assoc data :shot/user {:user/id (:user/id user)})
-              (dissoc shot :shot/created-at)))
-       (is (inst? (:shot/created-at shot)))))))
+(defn shot-fixture [user]
+  (let [data {:shot/in 18.0
+              :shot/out 36.0
+              :shot/duration 25.0}]
+    (parser {:schott.authed/user user
+             :ring/request {:identity user}}
+            [{`(schott.resolvers/create-shot ~data)
+              (-> [:shot/created-at]
+                  (into (conj (keys data))))}])))
+
+(deftest create-shot
+  (testing "should create a new shot"
+    (let [data {:shot/in 18.0
+                :shot/out 36.0
+                :shot/duration 25.0}
+          user (user-fixture)
+          response (parser {:schott.authed/user user
+                            :ring/request {:identity user}} [{`(schott.resolvers/create-shot ~data)
+                                                              (-> [:shot/created-at]
+                                                                  (into (conj (keys data) {:shot/user [:user/id]})))}])
+          shot (get response 'schott.resolvers/create-shot)]
+      (is (= (assoc data :shot/user {:user/id (:user/id user)})
+             (dissoc shot :shot/created-at)))
+      (is (inst? (:shot/created-at shot))))))
+
+(deftest delete-shot
+  (testing "should delete an existing shot"
+    (let [user (user-fixture)
+          shot (shot-fixture user)
+          response (parser {:schott.authed/user user
+                            :ring/request {:identity user}}
+                           [{`(schott.resolvers/delete-shot {:shot/id ~(:shot/id shot)})
+                             [:flash/message]}])]
+      (is (= "Deleted shot" (:flash/message response))))))
 
 (comment
   (def test-user (user-fixture))

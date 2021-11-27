@@ -5,7 +5,7 @@
    [ring.mock.request :refer :all]
    [schott.handler :refer :all]
    [schott.middleware.formats :as formats]
-   [schott.test_helpers :refer [with-test-db]]))
+   [schott.test-helpers :refer [with-test-db]]))
 
 (defn parse-json [body]
   (m/decode formats/instance "application/json" body))

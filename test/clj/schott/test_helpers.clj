@@ -1,6 +1,7 @@
-(ns schott.test_helpers
+(ns schott.test-helpers
   (:require
    [mount.core :as mount]
+   [schott.core]
    [schott.db.datahike :as db]))
 
 (defn with-test-db []
