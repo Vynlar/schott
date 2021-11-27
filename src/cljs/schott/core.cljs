@@ -15,8 +15,13 @@
   :text-purple-500)
 
 (o/defstyled container :div :bg-amber-100)
-(o/defstyled page-container :div :px-4 :md:px-6 :py-5 :max-w-screen-md :mx-auto :bg-white :rounded-t-3xl :space-y-3)
-(o/defstyled shot-grid :section :grid :gap-3 :grid-cols-1 :md:grid-cols-2)
+(o/defstyled page-container :div :px-4 :md:px-6 :py-5 :max-w-screen-md :mx-auto :bg-white :rounded-t-3xl :space-y-10)
+(o/defstyled page-section :section
+  :space-y-2)
+(o/defstyled page-header :h1 :font-bold :block :text-lg)
+(o/defstyled page-description :p)
+
+(o/defstyled shot-grid :div :grid :gap-3 :grid-cols-1 :md:grid-cols-2)
 (o/defstyled shot-card :article
   :font-bold
   :text-black
@@ -63,48 +68,75 @@
     :class (when (= page @(rf/subscribe [:common/page-id])) :is-active)}
    title])
 
-(o/defstyled navbar-container :nav :p-4)
+(o/defstyled navbar-container :nav :p-4 :flex :items-center :space-x-2)
 
 (defn navbar []
-  (r/with-let [expanded? (r/atom false)]
-    [navbar-container
-     [:div.navbar-brand
-      [:a.navbar-item {:href "/" :style {:font-weight :bold}} "schott"]
-      [:span.navbar-burger.burger
-       {:data-target :nav-menu
-        :on-click #(swap! expanded? not)
-        :class (when @expanded? :is-active)}
-       [:span] [:span] [:span]]]
-     [:div#nav-menu.navbar-menu
-      {:class (when @expanded? :is-active)}
-      [:div.navbar-start
-       [nav-link "#/" "Home" :home]]]]))
+  [navbar-container
+   fa/coffee-solid
+   [:a {:href "/"} [page-header  "shot"]]])
+
+(o/defstyled form-container :div
+  :space-y-4 :bg-gray-100 :p-3 :rounded-lg
+  :border :border-gray-200)
+(o/defstyled form-label :label
+  :font-bold :pb-1)
+(o/defstyled form-help-text :span
+  :italic :text :text-gray-600 :text-sm :text-right)
+(o/defstyled form-input :input
+  :border-1
+  :border-gray-300
+  :px-3
+  :py-2
+  :rounded-lg)
+(o/defstyled form-control :div
+  :flex :flex-col)
+(o/defstyled form-submit :button
+  :border-2 :border-amber-400 :rounded-lg :block :w-full :py-2 :font-bold
+  :bg-white :text-amber-700)
 
 (defn create-shot-form []
   (let [in @(rf/subscribe [:forms/field-value :create-shot :in])
         out @(rf/subscribe [:forms/field-value :create-shot :out])
         duration @(rf/subscribe [:forms/field-value :create-shot :duration])]
     [:form {:on-submit (with-default-prevented (fn [_] (rf/dispatch [:create-shot/submit])))}
-     [:label {:for :create-shot-in} "Grams coffee in"]
-     [:input#create-shot-in {:type :number
-                             :value in
-                             :on-change #(rf/dispatch [:create-shot/update-in (target-value %)])}]
-     [:label {:for :create-shot-in} "Grams coffee out"]
-     [:input#create-shot-out {:type :number
-                              :value out
-                              :on-change #(rf/dispatch [:create-shot/update-out (target-value %)])}]
-     [:label {:for :create-shot-duration} "Grams coffee duration"]
-     [:input#create-shot-duration {:type :number
-                                   :value duration
-                                   :on-change #(rf/dispatch [:create-shot/update-duration (target-value %)])}]
-     [:button {:type :submit} "Create"]]))
+     [form-container
+      [:div
+       [form-control
+        [form-label {:for :create-shot-in} "In"]
+        [form-input {:id "create-shot-in"
+                     :type :number
+                     :value in
+                     :on-change #(rf/dispatch [:create-shot/update-in (target-value %)])}]
+        [form-help-text "Grams of ground coffee in"]]
+       [form-control
+        [form-label {:for :create-shot-in} "Out"]
+        [form-input {:id "create-shot-out"
+                     :type :number
+                     :value out
+                     :on-change #(rf/dispatch [:create-shot/update-out (target-value %)])}]
+        [form-help-text "Grams of espresso out"]]
+       [form-control
+        [form-label {:for :create-shot-duration} "Time"]
+        [form-input {:id "create-shot-duration"
+                     :type :number
+                     :value duration
+                     :on-change #(rf/dispatch [:create-shot/update-duration (target-value %)])}]
+        [form-help-text "Length of shot in seconds"]]]
+      [form-submit {:type :submit} "Create"]]]))
 
-(o/defstyled page-header :h1 :font-bold :block)
+(defn add-shot-section []
+  [page-section
+   [:div
+    [page-header "Add shot"]
+    [page-description "Record a new shot"]]
+   [create-shot-form]])
 
-(defn home-page []
+(defn shot-list []
   (let [shots @(rf/subscribe [:shots/all])]
-    [page-container
-     [page-header "Shots"]
+    [page-section
+     [:div
+      [page-header "Shots"]
+      [page-description "Your most recent shots"]]
      [shot-grid
       (for [{:shot/keys [id] :as shot} shots]
         ^{:key id}
@@ -112,6 +144,7 @@
          [shot-card-header "27 Nov 2021"]
          [shot-card-values
           (let [{:shot/keys [in out duration created-at]} shot]
+            (def created-at created-at)
             [:<>
              [shot-card-section
               [shot-card-icon fa/balance-scale-solid]
@@ -124,9 +157,12 @@
              [shot-card-section
               [shot-card-icon fa/clock]
               [shot-card-label "Time"]
-              [shot-card-value duration "g"]]])]])]
+              [shot-card-value duration "g"]]])]])]]))
 
-     [create-shot-form]]))
+(defn home-page []
+  [page-container
+   [shot-list]
+   [add-shot-section]])
 
 (defn login-page []
   (let [email (rf/subscribe [:login/email])

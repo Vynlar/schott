@@ -1,4 +1,4 @@
-{:deps true
+{:deps {:aliases [:dev :cider-cljs]}
  :nrepl {:port 7002}
  :builds
  {:app
@@ -13,4 +13,4 @@
    :build-hooks [(schott.util/spit-styles)]}
   :test {:target  :node-test, :output-to "target/test/test.js"
          :autorun true}}
- :lein  {:profile "+dev"}}
+ #_#_:lein  {:profile "+dev"}}
