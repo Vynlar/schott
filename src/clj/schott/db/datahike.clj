@@ -149,8 +149,25 @@
                           @conn shot-id user-id)]
     (boolean query-result)))
 
+(defn create-beans
+  ([params] (create-beans conn params))
+  ([conn params]
+   (let [id (uuid)
+         tx (merge params
+                   {:beans/id id})]
+     (d/transact conn [tx])
+     {:beans/id id})))
+
+(defn get-beans-by-id
+  ([id] (get-beans-by-id conn id))
+  ([conn id]
+   (d/q '[:find (pull ?u [*]) .
+          :in $ ?id
+          :where
+          [?u :beans/id ?id]]
+        @conn id)))
+
 (comment
-  query-result
   (d/transact conn [{:user/email "blarp@example.com"
                      :user/hashed-password (hashers/derive "password")}])
 

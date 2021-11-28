@@ -94,8 +94,19 @@
                              [:flash/message]}])]
       (is (= "Deleted shot" (:flash/message (get response `schott.resolvers/delete-shot)))))))
 
+(deftest create-beans
+  (testing "should add new beans"
+    (let [data {:beans/name "Jet Setter"}
+          user (user-fixture)
+          response (parser {:schott.authed/user user
+                            :ring/request {:identity user}}
+                           [{`(schott.resolvers/create-beans ~data)
+                             (-> [:beans/id]
+                                 (into (keys data)))}])
+          beans (get response 'schott.resolvers/create-beans)]
+      (is (= data (dissoc beans :beans/id))))))
+
 (comment
-  response
   (def test-user (user-fixture))
   (let [test-token
         (get-in (parser {} [`(schott.resolvers/login {:user/email ~(:user/email test-user) :user/password "password"})]) ['schott.resolvers/login :session/token])]
