@@ -81,9 +81,8 @@
                               :schott.authed/keys [user] :as env}
                              params]
   {::pc/sym `delete-shot
-   ::pc/params [:shot/in]
+   ::pc/params [:shot/id]
    ::pc/output [:flash/message]}
-  ;; TODO restrict users to only delete their own shots
   (when-not (and (authenticated? (:ring/request env)) (db/shot-owned-by? params user))
     (throw-unauthorized))
   (db/delete-shot params)

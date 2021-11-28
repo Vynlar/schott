@@ -42,6 +42,17 @@
               :db/cardinality :db.cardinality/one}
              {:db/ident :shot/user
               :db/valueType :db.type/ref
+              :db/cardinality :db.cardinality/one}
+             {:db/ident :shot/beans
+              :db/valueType :db.type/ref
+              :db/cardinality :db.cardinality/one}
+
+             {:db/ident :beans/id
+              :db/unique :db.unique/identity
+              :db/valueType :db.type/uuid
+              :db/cardinality :db.cardinality/one}
+             {:db/ident :beans/name
+              :db/valueType :db.type/string
               :db/cardinality :db.cardinality/one}])
 
 (defn- uuid [] (java.util.UUID/randomUUID))
@@ -133,12 +144,13 @@
                             :in $ ?sid ?uid
                             :where
                             [?s :shot/id ?sid]
-                            [?s :shot/user ?u]
-                            [?u :user/id ?uid]]
+                            [?u :user/id ?uid]
+                            [?s :shot/user ?u]]
                           @conn shot-id user-id)]
     (boolean query-result)))
 
 (comment
+  query-result
   (d/transact conn [{:user/email "blarp@example.com"
                      :user/hashed-password (hashers/derive "password")}])
 

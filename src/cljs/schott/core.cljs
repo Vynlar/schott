@@ -20,6 +20,7 @@
 (o/defstyled container :div :bg-amber-100 :min-h-screen :md:pb-10)
 (o/defstyled page-container :div
   :px-4 :md:px-6 :py-5 :max-w-screen-md :mx-auto
+  :border-t-1 :border-amber-200
   :bg-white :rounded-t-3xl :md:rounded-b-3xl :space-y-10)
 (o/defstyled page-section :section
   :space-y-2)
@@ -97,8 +98,8 @@
 (o/defstyled form-control :div
   :flex :flex-col)
 (o/defstyled form-submit :button
-  :border-2 :border-amber-400 :rounded-lg :block :w-full :py-2 :font-bold
-  :bg-white :text-amber-700)
+  :border-1 :border-b-3 :border-amber-300 :rounded-lg :block :w-full :py-2 :font-bold
+  :bg-amber-100 :text-amber-700)
 
 (defn create-shot-form []
   (let [in @(rf/subscribe [:forms/field-value :create-shot :in])
@@ -158,7 +159,7 @@
   :text-sm :px-1)
 
 (defn shot-card-container [shot]
-  (r/with-let [expanded? (r/atom true)]
+  (r/with-let [expanded? (r/atom false)]
     (let [{:shot/keys [in out duration created-at]} shot]
       [shot-card {:on-click #(swap! expanded? not)}
        [shot-card-header
@@ -177,7 +178,7 @@
          [shot-card-section
           [shot-card-icon fa/clock]
           [shot-card-label "Time"]
-          [shot-card-value duration "g"]]]]
+          [shot-card-value duration "s"]]]]
        (when @expanded?
          [shot-card-details
           [:div
@@ -201,8 +202,8 @@
 
 (defn home-page []
   [page-container
-   [shot-list]
-   [add-shot-section]])
+   [add-shot-section]
+   [shot-list]])
 
 (defn login-page []
   (let [email (rf/subscribe [:login/email])

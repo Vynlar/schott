@@ -61,12 +61,13 @@
 (defn shot-fixture [user]
   (let [data {:shot/in 18.0
               :shot/out 36.0
-              :shot/duration 25.0}]
-    (parser {:schott.authed/user user
-             :ring/request {:identity user}}
-            [{`(schott.resolvers/create-shot ~data)
-              (-> [:shot/created-at]
-                  (into (conj (keys data))))}])))
+              :shot/duration 25.0}
+        result (parser {:schott.authed/user user
+                        :ring/request {:identity user}}
+                       [{`(schott.resolvers/create-shot ~data)
+                         (-> [:shot/created-at :shot/id]
+                             (into (conj (keys data))))}])]
+    (get result `schott.resolvers/create-shot)))
 
 (deftest create-shot
   (testing "should create a new shot"
@@ -91,9 +92,10 @@
                             :ring/request {:identity user}}
                            [{`(schott.resolvers/delete-shot {:shot/id ~(:shot/id shot)})
                              [:flash/message]}])]
-      (is (= "Deleted shot" (:flash/message response))))))
+      (is (= "Deleted shot" (:flash/message (get response `schott.resolvers/delete-shot)))))))
 
 (comment
+  response
   (def test-user (user-fixture))
   (let [test-token
         (get-in (parser {} [`(schott.resolvers/login {:user/email ~(:user/email test-user) :user/password "password"})]) ['schott.resolvers/login :session/token])]
