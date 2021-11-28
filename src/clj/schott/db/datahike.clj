@@ -53,6 +53,9 @@
               :db/cardinality :db.cardinality/one}
              {:db/ident :beans/name
               :db/valueType :db.type/string
+              :db/cardinality :db.cardinality/one}
+             {:db/ident :beans/user
+              :db/valueType :db.type/ref
               :db/cardinality :db.cardinality/one}])
 
 (defn- uuid [] (java.util.UUID/randomUUID))
@@ -151,6 +154,20 @@
                            @conn shot-id user-id)]
      (boolean query-result))))
 
+(defn beans-owned-by?
+  ([beans user] (beans-owned-by? conn beans user))
+  ([conn beans user]
+   (let [beans-id (:beans/id beans)
+         user-id (:user/id user)
+         query-result (d/q '[:find ?bid .
+                             :in $ ?bid ?uid
+                             :where
+                             [?s :beans/id ?bid]
+                             [?u :user/id ?uid]
+                             [?s :beans/user ?u]]
+                           @conn beans-id user-id)]
+     (boolean query-result))))
+
 (defn create-beans
   ([params] (create-beans conn params))
   ([conn params]
@@ -163,7 +180,7 @@
 (defn get-beans-by-id
   ([id] (get-beans-by-id conn id))
   ([conn id]
-   (d/q '[:find (pull ?u [*]) .
+   (d/q '[:find (pull ?u [* {:beans/user [:user/id]}]) .
           :in $ ?id
           :where
           [?u :beans/id ?id]]

@@ -69,7 +69,11 @@
   {::pc/sym `create-shot
    ::pc/params [:shot/in :shot/out :shot/duration {:shot/beans [:beans/id]}]
    ::pc/output [:shot/id]}
-  (when-not (authenticated? (:ring/request env))
+  (when-not (and
+             (authenticated? (:ring/request env))
+             (if beans
+               (db/beans-owned-by? conn beans user)
+               true))
     (throw-unauthorized))
   (db/create-shot conn {:shot/in (double in)
                         :shot/out (double out)
@@ -97,12 +101,12 @@
    ::pc/output [:beans/id]}
   (when-not (authenticated? (:ring/request env))
     (throw-unauthorized))
-  (db/create-beans conn params))
+  (db/create-beans conn (assoc params :beans/user {:user/id (:user/id user)})))
 
 (pc/defresolver beans-from-id
   [{conn :db/conn} {:beans/keys [id]}]
   {::pc/input #{:beans/id}
-   ::pc/output [:beans/name]}
+   ::pc/output [:beans/name {:beans/user [:user/id]}]}
   (db/get-beans-by-id conn id))
 
 (def registry [user-from-email user-from-id create-user login create-shot

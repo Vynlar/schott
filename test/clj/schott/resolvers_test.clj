@@ -102,6 +102,21 @@
              (dissoc shot :shot/created-at)))
       (is (inst? (:shot/created-at shot))))))
 
+(deftest create-shot-beans-ownership
+  (testing "should prevent using beans you don't own"
+    (let [user1 (user-fixture)
+          user2 (user-fixture)
+          beans (beans-fixture user2 {:beans/name "Jet Setter"})
+          data {:shot/in 18.0
+                :shot/out 36.0
+                :shot/duration 25.0
+                :shot/beans {:beans/id (:beans/id beans)}}
+          response (parser {:schott.authed/user user1
+                            :ring/request {:identity user1}} [`(schott.resolvers/create-shot ~data)])
+
+          shot (get response 'schott.resolvers/create-shot)]
+      (is (re-find #"unauthorized" shot)))))
+
 (deftest delete-shot
   (testing "should delete an existing shot"
     (let [user (user-fixture)
@@ -114,18 +129,17 @@
 
 (deftest create-beans
   (testing "should add new beans"
-    (let [data {:beans/name "Jet Setter"}
-          user (user-fixture)
+    (let [user (user-fixture)
+          data {:beans/name "Jet Setter"}
           response (parser {:schott.authed/user user
                             :ring/request {:identity user}}
                            [{`(schott.resolvers/create-beans ~data)
-                             (-> [:beans/id]
-                                 (into (keys data)))}])
+                             [:beans/id :beans/name {:beans/user [:user/id]}]}])
           beans (get response 'schott.resolvers/create-beans)]
-      (is (= data (dissoc beans :beans/id))))))
+      (is (= (assoc data :beans/user {:user/id (:user/id user)})
+             (dissoc beans :beans/id))))))
 
 (comment
-  shot
   (def test-user (user-fixture))
   (let [test-token
         (get-in (parser {} [`(schott.resolvers/login {:user/email ~(:user/email test-user) :user/password "password"})]) ['schott.resolvers/login :session/token])]
