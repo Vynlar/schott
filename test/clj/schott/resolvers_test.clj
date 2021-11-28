@@ -58,10 +58,22 @@
                               [:user/id :user/email]}])]
     (get response 'schott.resolvers/create-user)))
 
+(defn beans-fixture [user params]
+  (let [defaults {:beans/name "Phake"}
+        data (merge defaults params)
+        result (parser {:schott.authed/user user
+                        :ring/request {:identity user}}
+                       [{`(schott.resolvers/create-beans ~data)
+                         (-> [:beans/id]
+                             (into (conj (keys data))))}])]
+    (get result `schott.resolvers/create-beans)))
+
 (defn shot-fixture [user]
-  (let [data {:shot/in 18.0
+  (let [beans (beans-fixture user {})
+        data {:shot/in 18.0
               :shot/out 36.0
-              :shot/duration 25.0}
+              :shot/duration 25.0
+              :shot/beans {:beans/id (:beans/id beans)}}
         result (parser {:schott.authed/user user
                         :ring/request {:identity user}}
                        [{`(schott.resolvers/create-shot ~data)
@@ -71,16 +83,22 @@
 
 (deftest create-shot
   (testing "should create a new shot"
-    (let [data {:shot/in 18.0
+    (let [user (user-fixture)
+          beans (beans-fixture user {:beans/name "Jet Setter"})
+          data {:shot/in 18.0
                 :shot/out 36.0
-                :shot/duration 25.0}
-          user (user-fixture)
+                :shot/duration 25.0
+                :shot/beans {:beans/id (:beans/id beans)}}
           response (parser {:schott.authed/user user
                             :ring/request {:identity user}} [{`(schott.resolvers/create-shot ~data)
-                                                              (-> [:shot/created-at]
-                                                                  (into (conj (keys data) {:shot/user [:user/id]})))}])
+                                                              (into [:shot/created-at]
+                                                                    (-> (keys data)
+                                                                        (conj {:shot/user [:user/id]})
+                                                                        (conj {:shot/beans [:beans/id]})))}])
           shot (get response 'schott.resolvers/create-shot)]
-      (is (= (assoc data :shot/user {:user/id (:user/id user)})
+      (is (= (-> data
+                 (assoc :shot/user {:user/id (:user/id user)})
+                 (assoc :shot/beans {:beans/id (:beans/id beans)}))
              (dissoc shot :shot/created-at)))
       (is (inst? (:shot/created-at shot))))))
 
@@ -107,6 +125,7 @@
       (is (= data (dissoc beans :beans/id))))))
 
 (comment
+  shot
   (def test-user (user-fixture))
   (let [test-token
         (get-in (parser {} [`(schott.resolvers/login {:user/email ~(:user/email test-user) :user/password "password"})]) ['schott.resolvers/login :session/token])]

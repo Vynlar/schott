@@ -50,7 +50,7 @@
 (pc/defresolver shot-from-id
   [{conn :db/conn} {:shot/keys [id]}]
   {::pc/input #{:shot/id}
-   ::pc/output [:shot/in :shot/out :shot/duration :shot/created-at {:shot/user [:user/id]}]}
+   ::pc/output [:shot/in :shot/out :shot/duration :shot/created-at {:shot/user [:user/id]} {:shot/beans [:beans/id]}]}
   (db/get-shot-by-id conn id))
 
 (pc/defresolver shots-by-user [_ params]
@@ -65,9 +65,9 @@
 
 (pc/defmutation create-shot [{:db/keys [conn]
                               :schott.authed/keys [user] :as env}
-                             {:shot/keys [in out duration]}]
+                             {:shot/keys [in out duration beans]}]
   {::pc/sym `create-shot
-   ::pc/params [:shot/in :shot/out :shot/duration]
+   ::pc/params [:shot/in :shot/out :shot/duration {:shot/beans [:beans/id]}]
    ::pc/output [:shot/id]}
   (when-not (authenticated? (:ring/request env))
     (throw-unauthorized))
@@ -75,7 +75,8 @@
                         :shot/out (double out)
                         :shot/duration (double duration)
                         :shot/created-at (java.util.Date.)
-                        :shot/user [:user/id (:user/id user)]}))
+                        :shot/user [:user/id (:user/id user)]
+                        :shot/beans [:beans/id (:beans/id beans)]}))
 
 (pc/defmutation delete-shot [{:db/keys [conn]
                               :schott.authed/keys [user] :as env}
@@ -83,9 +84,9 @@
   {::pc/sym `delete-shot
    ::pc/params [:shot/id]
    ::pc/output [:flash/message]}
-  (when-not (and (authenticated? (:ring/request env)) (db/shot-owned-by? params user))
+  (when-not (and (authenticated? (:ring/request env)) (db/shot-owned-by? conn params user))
     (throw-unauthorized))
-  (db/delete-shot params)
+  (db/delete-shot conn params)
   {:flash/message "Deleted shot"})
 
 (pc/defmutation create-beans [{:db/keys [conn]
@@ -96,7 +97,7 @@
    ::pc/output [:beans/id]}
   (when-not (authenticated? (:ring/request env))
     (throw-unauthorized))
-  (db/create-beans params))
+  (db/create-beans conn params))
 
 (pc/defresolver beans-from-id
   [{conn :db/conn} {:beans/keys [id]}]

@@ -122,7 +122,7 @@
 (defn get-shot-by-id
   ([id] (get-shot-by-id conn id))
   ([conn id]
-   (d/q '[:find (pull ?u [* {:shot/user [:user/id]}]) .
+   (d/q '[:find (pull ?u [* {:shot/user [:user/id]} {:shot/beans [:beans/id]}]) .
           :in $ ?id
           :where
           [?u :shot/id ?id]]
@@ -137,17 +137,19 @@
          [?u :user/id ?uid]]
        @conn id))
 
-(defn shot-owned-by? [shot user]
-  (let [shot-id (:shot/id shot)
-        user-id (:user/id user)
-        query-result (d/q '[:find ?sid .
-                            :in $ ?sid ?uid
-                            :where
-                            [?s :shot/id ?sid]
-                            [?u :user/id ?uid]
-                            [?s :shot/user ?u]]
-                          @conn shot-id user-id)]
-    (boolean query-result)))
+(defn shot-owned-by?
+  ([shot user] (shot-owned-by? conn shot user))
+  ([conn shot user]
+   (let [shot-id (:shot/id shot)
+         user-id (:user/id user)
+         query-result (d/q '[:find ?sid .
+                             :in $ ?sid ?uid
+                             :where
+                             [?s :shot/id ?sid]
+                             [?u :user/id ?uid]
+                             [?s :shot/user ?u]]
+                           @conn shot-id user-id)]
+     (boolean query-result))))
 
 (defn create-beans
   ([params] (create-beans conn params))
