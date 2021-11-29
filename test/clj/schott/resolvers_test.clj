@@ -139,6 +139,17 @@
       (is (= (assoc data :beans/user {:user/id (:user/id user)})
              (dissoc beans :beans/id))))))
 
+(deftest read-beans
+  (testing "should return all beans for a given user"
+    (let [user1 (user-fixture)
+          user2 (user-fixture)
+          _ (beans-fixture user1 {:beans/name "First"})
+          _ (beans-fixture user2 {:beans/name "Second"})
+          response (parser {:schott.authed/user user1
+                            :ring/request {:identity user1}}
+                           [{:beans/all [:beans/name]}])]
+      (is (= {:beans/all [{:beans/name "First"}]} response)))))
+
 (comment
   (def test-user (user-fixture))
   (let [test-token

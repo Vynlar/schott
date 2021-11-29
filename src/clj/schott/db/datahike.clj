@@ -180,11 +180,22 @@
 (defn get-beans-by-id
   ([id] (get-beans-by-id conn id))
   ([conn id]
-   (d/q '[:find (pull ?u [* {:beans/user [:user/id]}]) .
+   (d/q '[:find (pull ?b [* {:beans/user [:user/id]}]) .
           :in $ ?id
           :where
-          [?u :beans/id ?id]]
+          [?b :beans/id ?id]]
         @conn id)))
+
+(defn get-beans-for-user-id
+  ([user-id] (get-beans-for-user-id conn user-id))
+  ([conn user-id]
+   (d/q '[:find [?bid ...]
+          :in $ ?uid
+          :where
+          [?u :user/id ?uid]
+          [?b :beans/user ?u]
+          [?b :beans/id ?bid]]
+        @conn user-id)))
 
 (comment
   (d/transact conn [{:user/email "blarp@example.com"
@@ -193,6 +204,11 @@
   (d/q '[:find ?email
          :where
          [?e :user/email ?email]]
+       @conn)
+
+  (d/q '[:find (pull ?b [:beans/id :beans/name {:beans/user [:user/id]}])
+         :where
+         [?b :beans/name ?bn]]
        @conn)
 
   (shot-owned-by? "3" "4") ; nil

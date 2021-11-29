@@ -95,6 +95,13 @@
   :px-3
   :py-2
   :rounded-lg)
+(o/defstyled form-select :select
+  :bg-white
+  :border-1
+  :border-gray-300
+  :px-3
+  :py-2
+  :rounded-lg)
 (o/defstyled form-control :div
   :flex :flex-col)
 (o/defstyled form-submit :button
@@ -108,15 +115,26 @@
     [:form {:on-submit (with-default-prevented (fn [_] (rf/dispatch [:create-shot/submit])))}
      [form-container
       [:div
+       (let [beans @(rf/subscribe [:beans/all])]
+         [form-control
+          [form-label {:for :create-shot-in} "Beans"]
+          [form-select {:id "create-shot-beans"
+                        :value in
+                        :on-change #(rf/dispatch [:create-shot/update-in (target-value %)])}
+           (when beans
+             (map (fn [{:beans/keys [id name]}]
+                    [:option {:value id} name])
+                  beans))]
+          [form-help-text "Which beans you are using"]])
        [form-control
-        [form-label {:for :create-shot-in} "In"]
+        [form-label {:for :create-shot-in} "Dose"]
         [form-input {:id "create-shot-in"
                      :type :number
                      :value in
                      :on-change #(rf/dispatch [:create-shot/update-in (target-value %)])}]
         [form-help-text "Grams of ground coffee in"]]
        [form-control
-        [form-label {:for :create-shot-in} "Out"]
+        [form-label {:for :create-shot-in} "Yield"]
         [form-input {:id "create-shot-out"
                      :type :number
                      :value out
@@ -131,12 +149,32 @@
         [form-help-text "Length of shot in seconds"]]]
       [form-submit {:type :submit} "Create"]]]))
 
+(defn create-beans-form []
+  (let [name @(rf/subscribe [:forms/field-value :create-beans :name])]
+    [:form {:on-submit (with-default-prevented (fn [_] (rf/dispatch [:create-beans/submit])))}
+     [form-container
+      [:div
+       [form-control
+        [form-label {:for :create-beans-name} "Name"]
+        [form-input {:id :create-beans-name
+                     :value name
+                     :on-change #(rf/dispatch [:create-beans/update-name (target-value %)])}]]]
+
+      [form-submit {:type :submit} "Create"]]]))
+
 (defn add-shot-section []
   [page-section
    [:div
     [page-header "Add shot"]
     [page-description "Record a new shot"]]
    [create-shot-form]])
+
+(defn add-beans-section []
+  [page-section
+   [:div
+    [page-header "Add beans"]
+    [page-description "Got some new beans? Add them here."]]
+   [create-beans-form]])
 
 (def date-formatter (time-format/formatter "dd MMM yyyy"))
 
@@ -203,7 +241,8 @@
 (defn home-page []
   [page-container
    [add-shot-section]
-   [shot-list]])
+   [shot-list]
+   [add-beans-section]])
 
 (defn login-page []
   (let [email (rf/subscribe [:login/email])

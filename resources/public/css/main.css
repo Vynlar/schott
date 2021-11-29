@@ -242,3 +242,4 @@ img, video {
 .schott_core__tag{line-height:1.25rem;border-width:1px;--gi-text-opacity:1;border-color:rgba(252,211,77,var(--gi-border-opacity));text-transform:uppercase;--gi-bg-opacity:1;--gi-border-opacity:1;font-weight:700;font-size:.875rem;background-color:rgba(254,243,199,var(--gi-bg-opacity));padding-right:.25rem;border-radius:.125rem;color:rgba(180,83,9,var(--gi-text-opacity));padding-left:.25rem}
 .schott_core__tag_container{padding-top:.25rem;padding-bottom:.25rem;display:flex;flex-wrap:wrap;gap:.5rem}
 .schott_core__shot_card_details_label{font-weight:700}
+.schott_core__form_select{border-width:1px;padding-bottom:.5rem;border-color:rgba(212,212,216,var(--gi-border-opacity));--gi-bg-opacity:1;--gi-border-opacity:1;background-color:rgba(255,255,255,var(--gi-bg-opacity));padding-right:.75rem;border-radius:.5rem;padding-left:.75rem;padding-top:.5rem}
