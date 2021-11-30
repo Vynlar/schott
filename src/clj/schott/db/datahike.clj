@@ -197,6 +197,17 @@
           [?b :beans/id ?bid]]
         @conn user-id)))
 
+(defn get-shots-for-user-id
+  ([user-id] (get-shots-for-user-id conn user-id))
+  ([conn user-id]
+   (d/q '[:find [?sid ...]
+          :in $ ?uid
+          :where
+          [?u :user/id ?uid]
+          [?b :shot/user ?u]
+          [?b :shot/id ?sid]]
+        @conn user-id)))
+
 (comment
   (d/transact conn [{:user/email "blarp@example.com"
                      :user/hashed-password (hashers/derive "password")}])

@@ -33,19 +33,19 @@
  (fn [{:keys [schott-auth-token]} _]
    {:http-xhrio
     (with-token schott-auth-token
-      (eql-req {:eql [{:session/current-user [{:user/shots [:shot/id
-                                                            :shot/in
-                                                            :shot/out
-                                                            :shot/duration
-                                                            {:shot/beans [:beans/id :beans/name]}
-                                                            :shot/created-at]}]}]
+      (eql-req {:eql `[{(:shot/all {:limit 10}) [:shot/id
+                                                 :shot/in
+                                                 :shot/out
+                                                 :shot/duration
+                                                 {:shot/beans [:beans/id :beans/name]}
+                                                 :shot/created-at]}]
 
                 :on-success [:shots/fetch-all-response]}))}))
 
 (rf/reg-event-db
  :shots/fetch-all-response
  (fn [db [_ res]]
-   (let [shots (get-in res [:session/current-user :user/shots])]
+   (let [shots (:shot/all res)]
      (assoc db :shots/all shots))))
 
 (rf/reg-event-fx

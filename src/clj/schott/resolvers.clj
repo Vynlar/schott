@@ -63,6 +63,15 @@
   (when-let [user (:schott.authed/user env)]
     {:session/current-user user}))
 
+(pc/defresolver all-shots
+  [{:db/keys [conn]
+    :schott.authed/keys [user] :as env} _]
+  {::pc/output [{:shot/all [:shot/id]}]}
+  (let [limit (or (-> env :ast :params :limit) 10)]
+    {:shot/all (->> (db/get-shots-for-user-id conn (:user/id user))
+                    (take limit)
+                    (map (fn [bid] {:shot/id bid})))}))
+
 (pc/defmutation create-shot [{:db/keys [conn]
                               :schott.authed/keys [user] :as env}
                              {:shot/keys [in out duration beans]}]
@@ -117,7 +126,7 @@
 
 (def registry [user-from-email user-from-id create-user login create-shot
                shot-from-id shots-by-user current-user delete-shot create-beans
-               beans-from-id all-beans])
+               beans-from-id all-beans all-shots])
 
 (defstate parser
   :start (p/parser {::p/env {::p/reader [p/map-reader
