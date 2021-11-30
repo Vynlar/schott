@@ -111,20 +111,22 @@
 (defn create-shot-form []
   (let [in @(rf/subscribe [:forms/field-value :create-shot :in])
         out @(rf/subscribe [:forms/field-value :create-shot :out])
-        duration @(rf/subscribe [:forms/field-value :create-shot :duration])]
+        duration @(rf/subscribe [:forms/field-value :create-shot :duration])
+        beans @(rf/subscribe [:forms/field-value :create-shot :beans])]
     [:form {:on-submit (with-default-prevented (fn [_] (rf/dispatch [:create-shot/submit])))}
      [form-container
       [:div
-       (let [beans @(rf/subscribe [:beans/all])]
+       (let [all-beans @(rf/subscribe [:beans/all])]
          [form-control
           [form-label {:for :create-shot-in} "Beans"]
           [form-select {:id "create-shot-beans"
-                        :value in
-                        :on-change #(rf/dispatch [:create-shot/update-in (target-value %)])}
-           (when beans
-             (map (fn [{:beans/keys [id name]}]
-                    [:option {:value id} name])
-                  beans))]
+                        :value beans
+                        :on-change #(rf/dispatch [:create-shot/update-beans (target-value %)])}
+           (when all-beans
+             (conj (map (fn [{:beans/keys [id name]}]
+                          [:option {:key id :value id} name])
+                        all-beans)
+                   [:option {:key "empty" :value "" :disabled true} "Select beans"]))]
           [form-help-text "Which beans you are using"]])
        [form-control
         [form-label {:for :create-shot-in} "Dose"]
@@ -198,7 +200,7 @@
 
 (defn shot-card-container [shot]
   (r/with-let [expanded? (r/atom false)]
-    (let [{:shot/keys [in out duration created-at]} shot]
+    (let [{:shot/keys [in out duration beans created-at]} shot]
       [shot-card {:on-click #(swap! expanded? not)}
        [shot-card-header
         (time-format/unparse date-formatter (time-coerce/from-date created-at))
@@ -219,9 +221,10 @@
           [shot-card-value duration "s"]]]]
        (when @expanded?
          [shot-card-details
-          [:div
-           [shot-card-details-label "Beans"]
-           [:span "Youngblood Jet Setter"]]
+          (when-let [beans-name (:beans/name beans)]
+            [:div
+             [shot-card-details-label "Beans"]
+             [:span beans-name]])
           [:div
            [shot-card-details-label "Tags"]
            [tag-container

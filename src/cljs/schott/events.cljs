@@ -37,6 +37,7 @@
                                                             :shot/in
                                                             :shot/out
                                                             :shot/duration
+                                                            {:shot/beans [:beans/id :beans/name]}
                                                             :shot/created-at]}]}]
 
                 :on-success [:shots/fetch-all-response]}))}))
@@ -76,12 +77,13 @@
  :create-shot/submit
  [(rf/inject-cofx :local-storage {:key :schott-auth-token})]
  (fn [{:keys [schott-auth-token db]} _]
-   (let [{:keys [in out duration]} (get-in db [:forms :create-shot])]
+   (let [{:keys [in out duration beans]} (get-in db [:forms :create-shot])]
      {:http-xhrio
       (with-token schott-auth-token
         (eql-req {:eql [{`(schott.resolvers/create-shot {:shot/in ~(js/parseFloat in)
                                                          :shot/out ~(js/parseFloat out)
-                                                         :shot/duration ~(js/parseFloat duration)})
+                                                         :shot/duration ~(js/parseFloat duration)
+                                                         :shot/beans {:beans/id ~(uuid beans)}})
                          [:shot/id]}]
                   :on-success [:create-shot/response]}))})))
 
@@ -97,7 +99,8 @@
    (assoc-in db [:forms :create-shot]
              {:in "18"
               :out ""
-              :duration ""})))
+              :duration ""
+              :beans ""})))
 
 (rf/reg-event-db
  :create-shot/update-in
@@ -113,6 +116,11 @@
  :create-shot/update-duration
  (fn [db [_ new-value]]
    (assoc-in db [:forms :create-shot :duration] new-value)))
+
+(rf/reg-event-db
+ :create-shot/update-beans
+ (fn [db [_ new-value]]
+   (assoc-in db [:forms :create-shot :beans] new-value)))
 
 (rf/reg-event-db
  :create-beans/init-form
