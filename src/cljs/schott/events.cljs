@@ -45,12 +45,6 @@
       (eql-req {:eql `[{(:shot/all {:limit 6}) ~shot-query}]
                 :on-success [:shots/fetch-all-response]}))}))
 
-(rf/reg-event-db
- :shots/fetch-all-response
- (fn [db [_ res]]
-   (let [shots (:shot/all res)]
-     (assoc db :shots/all shots))))
-
 (rf/reg-event-fx
  :beans/fetch-all
  [(rf/inject-cofx :local-storage {:key :schott-auth-token})]
@@ -75,15 +69,28 @@
 
 (rf/reg-event-db
  :beans/fetch-one-response
+
  (fn [db [_ id res]]
    (let [beans-details (get res [:beans/id id])]
      (assoc-in db [:table/beans id] beans-details))))
 
 (rf/reg-event-db
+ :shots/fetch-all-response
+ (fn [db [_ res]]
+   (let [shots (:shot/all res)
+         shots-map (into {} (map (fn [b] [(:shot/id b) b]) shots))]
+     (-> db
+         (assoc :shots/all (map :shot/id shots))
+         (update :table/shots merge shots-map)))))
+
+(rf/reg-event-db
  :beans/fetch-all-response
  (fn [db [_ res]]
-   (let [beans (:beans/all res)]
-     (assoc db :beans/all beans))))
+   (let [beans (:beans/all res)
+         beans-map (into {} (map (fn [b] [(:beans/id b) b]) beans))]
+     (-> db
+         (assoc :beans/all (map :beans/id beans))
+         (update :table/beans merge beans-map)))))
 
 (rf/reg-event-fx
  :shots/delete
@@ -311,12 +318,14 @@
 (rf/reg-sub
  :shots/all
  (fn [db _]
-   (get db :shots/all)))
+   (let [all-ids (get db :shots/all)]
+     (vals (select-keys (:table/shots db) all-ids)))))
 
 (rf/reg-sub
  :beans/all
  (fn [db _]
-   (get db :beans/all)))
+   (let [all-ids (get db :beans/all)]
+     (vals (select-keys (:table/beans db) all-ids)))))
 
 (rf/reg-sub
  :beans/one
