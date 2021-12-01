@@ -321,7 +321,7 @@
 (rf/reg-sub
  :beans/one
  (fn [db [_ id]]
-   (get-in db [:table/beans (to-uuid id)])))
+   (get-in db [:table/beans id])))
 
 (rf/reg-sub
  :forms/field-value
@@ -332,4 +332,4 @@
  :beans-details/id
  :<- [:common/route]
  (fn [route _]
-   (-> route :path-params :id)))
+   (to-uuid (-> route :path-params :id))))
