@@ -152,9 +152,11 @@
 
 (rf/reg-event-fx
  :create-beans/response
- (fn [_ _]
-   {:fx [[:dispatch [:create-beans/init-form]]
-         [:dispatch [:beans/fetch-all]]]}))
+ (fn [{:keys [db]} [_ response]]
+   (let [new-beans-id (get-in response [`schott.resolvers/create-beans :beans/id])]
+     {:db (assoc-in db [:forms :create-shot :beans] (str new-beans-id))
+      :fx [[:dispatch [:create-beans/init-form]]
+           [:dispatch [:beans/fetch-all]]]})))
 
 (rf/reg-event-db
  :common/set-error
@@ -275,3 +277,6 @@
  :forms/field-value
  (fn [db [_ form-name field-name]]
    (get-in db [:forms form-name field-name] "")))
+
+(comment
+  (uuid? (uuid "417320a5-01dd-46ef-8556-cd1f25629a55")))
