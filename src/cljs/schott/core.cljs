@@ -195,9 +195,11 @@
 (def date-formatter (time-format/formatter "dd MMM yyyy"))
 
 (o/defstyled shot-card-details :div
-  :flex :flex-col
-  :space-y-4
+  :grid :grid-cols-1 :gap-y-2
   :border-t :border-gray-200 :px-3 :py-2)
+
+(o/defstyled shot-card-details-row :div
+  :grid :grid-cols-2)
 
 (o/defstyled shot-card-details-label :div
   :font-bold)
@@ -243,16 +245,24 @@
           [shot-card-value duration "s"]]]]
        (when @expanded?
          [shot-card-details
-          (let [beans-name (:beans/name beans)]
-            (when (and (string? beans-name) (not (empty? beans-name)))
-              [:div
-               [shot-card-details-label "Beans"]
-               [:span beans-name]]))
-          (let [roaster-name (:roaster/name beans)]
-            (when (and (string? roaster-name) (not (empty? roaster-name)))
-              [:div
-               [shot-card-details-label "Roaster"]
-               [:span roaster-name]]))
+          [:div
+           [shot-card-details-label "Ratio"]
+           [:span "1 : " (.toFixed (/ out in) 1)]]
+          [shot-card-details-row
+           (let [beans-name (:beans/name beans)]
+             [:div
+              [shot-card-details-label "Beans"]
+              [:span
+               (if (and (string? beans-name) (not (empty? beans-name)))
+                 beans-name
+                 "--")]])
+           (let [roaster-name (:roaster/name beans)]
+             [:div
+              [shot-card-details-label "Roaster"]
+              [:span
+               (if (and (string? roaster-name) (not (empty? roaster-name)))
+                 roaster-name
+                 "--")]])]
           [:div
            [shot-card-details-label "Tags"]
            [tag-container
