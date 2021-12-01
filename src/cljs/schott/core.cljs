@@ -23,7 +23,7 @@
 (o/defstyled page-section :section
   :space-y-2)
 (o/defstyled page-header :h1 :font-bold :block :text-lg)
-(o/defstyled page-description :p)
+(o/defstyled page-description :p :italic)
 
 (o/defstyled shot-grid :div :grid :gap-3 :grid-cols-1 :md:grid-cols-2)
 (o/defstyled shot-card :article
@@ -180,7 +180,7 @@
   [page-section
    [:div
     [page-header "Record shot"]
-    [page-description "Record a new shot"]]
+    [page-description "Save a shot to your log"]]
    [create-shot-form]])
 
 (defn add-beans-section []
@@ -282,7 +282,7 @@
   (let [shots @(rf/subscribe [:shots/all])]
     [page-section
      [:div
-      [page-header "Shots"]
+      [page-header "Shot Log"]
       [page-description "Your most recent shots"]]
 
      (when (empty? shots)
@@ -319,11 +319,17 @@
         (when @message [:div @message])]
        [form-submit {:type :submit} "Login"]]]]))
 
+(o/defstyled footer :footer
+  :text-center :py-4
+  :font-bold :text-sm
+  ([] [:a {:href "https://adrianaleixandre.com"} "Adrian Aleixandre"]))
+
 (defn page []
   (if-let [page @(rf/subscribe [:common/page])]
     [container
      [navbar]
-     [page]]))
+     [page]
+     [footer]]))
 
 (defn navigate! [match _]
   (rf/dispatch [:common/navigate match]))
