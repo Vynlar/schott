@@ -10,8 +10,7 @@
 (defn handle-eql [{:keys [params] :as req}]
   (let [eql (:eql params)
         user (get-user req)
-        res (parser {:schott.authed/user user
-                     :ring/request req} eql)]
+        res (parser {:schott.authed/user user} eql)]
     (response/ok res)))
 
 (defn api-routes []

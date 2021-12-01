@@ -9,8 +9,9 @@
    [buddy.auth :refer [throw-unauthorized]]
    [schott.db.datahike :as db]))
 
-(defn authenticated? [{:schott.authed/keys [user]}]
-  (boolean user))
+(defn authed? [{:schott.authed/keys [user]}]
+  (boolean user)
+  true)
 
 (declare parser)
 
@@ -55,7 +56,7 @@
    {:shot/keys [id] :as params}]
   {::pc/input #{:shot/id}
    ::pc/output [:shot/in :shot/out :shot/duration :shot/created-at {:shot/user [:user/id]} {:shot/beans [:beans/id]}]}
-  (when-not (and (authenticated? env) (db/shot-owned-by? conn params user))
+  (when-not (and (authed? env) (db/shot-owned-by? conn params user))
     (throw-unauthorized))
   (db/get-shot-by-id conn id))
 
@@ -85,7 +86,7 @@
    ::pc/params [:shot/in :shot/out :shot/duration {:shot/beans [:beans/id]}]
    ::pc/output [:shot/id]}
   (when-not (and
-             (authenticated? env)
+             (authed? env)
              (if beans
                (db/beans-owned-by? conn beans user)
                true))
@@ -103,7 +104,7 @@
   {::pc/sym `delete-shot
    ::pc/params [:shot/id]
    ::pc/output [:flash/message]}
-  (when-not (and (authenticated? env) (db/shot-owned-by? conn params user))
+  (when-not (and (authed? env) (db/shot-owned-by? conn params user))
     (throw-unauthorized))
   (db/delete-shot conn params)
   {:flash/message "Deleted shot"})
@@ -114,7 +115,7 @@
   {::pc/sym `create-beans
    ::pc/params [:beans/name :roaster/name]
    ::pc/output [:beans/id]}
-  (when-not (authenticated? env)
+  (when-not (authed? env)
     (throw-unauthorized))
   (db/create-beans conn (assoc params :beans/user {:user/id (:user/id user)})))
 
