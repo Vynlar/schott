@@ -2,7 +2,6 @@
   (:require
    [day8.re-frame.http-fx]
    [re-frame.core :as rf]
-   [cljs-time.core :as time]
    [cljs-time.format :as time-format]
    [cljs-time.coerce :as time-coerce]
    [reagent.core :as r]
@@ -12,16 +11,14 @@
    [reitit.core :as reitit]
    [reitit.frontend.easy :as rfe]
    [schott.ajax :as ajax]
-   [schott.events]
-   [clojure.string :as str]))
+   [schott.events]))
 
 (o/defstyled button :button
   :text-purple-500)
 
 (o/defstyled container :div :bg-amber-100 :min-h-screen :md:pb-10)
 (o/defstyled page-container :div
-  :px-4 :md:px-6 :py-5 :max-w-screen-md :mx-auto
-  :border-t-1 :border-amber-200
+  :px-4 :md:px-6 :py-5 :max-w-screen-md :mx-auto :border-t-1 :border-amber-200
   :bg-white :rounded-t-3xl :md:rounded-b-3xl :space-y-10)
 (o/defstyled page-section :section
   :space-y-2)
@@ -47,7 +44,8 @@
   :text-gray-600 :self-center
   :pl-2 :pr-1
   {:grid-area "icon"})
-(o/defstyled shot-card-header :div
+(o/defstyled shot-card-header :button
+  :block :w-full
   :rounded-t-lg
   :border-b-1
   :border-amber-200
@@ -157,7 +155,7 @@
                      :value duration
                      :on-change #(rf/dispatch [:create-shot/update-duration (target-value %)])}]
         [form-help-text "Length of shot in seconds"]]]
-      [form-submit {:type :submit} "Create"]]]))
+      [form-submit {:type :submit} "Save"]]]))
 
 (defn create-beans-form []
   (let [name @(rf/subscribe [:forms/field-value :create-beans :name])
@@ -176,12 +174,12 @@
                     :value roaster-name
                     :on-change #(rf/dispatch [:create-beans/update-roaster-name (target-value %)])}]]
 
-      [form-submit {:type :submit} "Create"]]]))
+      [form-submit {:type :submit} "Save"]]]))
 
 (defn add-shot-section []
   [page-section
    [:div
-    [page-header "Add shot"]
+    [page-header "Record shot"]
     [page-description "Record a new shot"]]
    [create-shot-form]])
 
@@ -225,8 +223,8 @@
 (defn shot-card-container [shot]
   (r/with-let [expanded? (r/atom false)]
     (let [{:shot/keys [id in out duration beans created-at]} shot]
-      [shot-card {:on-click #(swap! expanded? not)}
-       [shot-card-header
+      [shot-card
+       [shot-card-header {:on-click #(swap! expanded? not)}
         (time-format/unparse date-formatter (time-coerce/from-date created-at))
         (if @expanded? fa/caret-up-solid fa/caret-down-solid)]
        [shot-card-values
@@ -293,11 +291,16 @@
       (for [{:shot/keys [id] :as shot} shots]
         ^{:key id} [shot-card-container shot])]]))
 
+(o/defstyled side-by-side :div
+  :grid :grid-cols-1 :md:grid-cols-2
+  :gap-6)
+
 (defn home-page []
   [page-container
-   [add-shot-section]
-   [shot-list]
-   [add-beans-section]])
+   [side-by-side
+    [add-shot-section]
+    [add-beans-section]]
+   [shot-list]])
 
 (defn login-page []
   (let [email (rf/subscribe [:login/email])
