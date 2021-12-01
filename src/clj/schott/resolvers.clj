@@ -109,6 +109,17 @@
   (db/delete-shot conn params)
   {:flash/message "Deleted shot"})
 
+(pc/defmutation delete-beans [{:db/keys [conn]
+                               :schott.authed/keys [user] :as env}
+                              params]
+  {::pc/sym `delete-beans
+   ::pc/params [:beans/id]
+   ::pc/output [:flash/message]}
+  (when-not (and (authed? env) (db/beans-owned-by? conn params user))
+    (throw-unauthorized))
+  (db/delete-beans conn params)
+  {:flash/message "Deleted beans"})
+
 (pc/defmutation create-beans [{:db/keys [conn]
                                :schott.authed/keys [user] :as env}
                               params]
@@ -133,7 +144,7 @@
 
 (def registry [user-from-email user-from-id create-user login create-shot
                shot-from-id shots-by-user current-user delete-shot create-beans
-               beans-from-id all-beans all-shots])
+               beans-from-id all-beans all-shots delete-beans])
 
 (defstate parser
   :start (p/parser {::p/env {::p/reader [p/map-reader

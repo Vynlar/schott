@@ -79,13 +79,19 @@
     :class (when (= page @(rf/subscribe [:common/page-id])) :is-active)}
    title])
 
-(o/defstyled navbar-container :nav :p-4 :flex :items-center :space-x-2 :max-w-screen-md :mx-auto)
+(o/defstyled navbar-container :nav :p-4 :flex :items-center :justify-between :max-w-screen-md :mx-auto)
+(o/defstyled navbar-items-container :nav :flex :space-x-2)
+
+(o/defstyled logo :div :flex :items-center :space-x-2)
 
 (defn navbar []
   [navbar-container
-   fa/coffee-solid
-   [:a {:href "/"} [page-header  "Espresso Logbook"]]
-   [:a {:href "/login"} "Login"]])
+   [logo
+    fa/coffee-solid
+    [:a {:href "/"} [page-header  "Espresso Logbook"]]]
+   [navbar-items-container
+    [:a {:href "#/beans"} "Beans"]
+    [:a {:href "#/login"} "Login"]]])
 
 (o/defstyled form-container :div
   :space-y-4 :bg-gray-100 :p-3 :rounded-lg
@@ -291,6 +297,35 @@
       (for [{:shot/keys [id] :as shot} shots]
         ^{:key id} [shot-card-container shot])]]))
 
+(o/defstyled beans-list-item-aside :p
+  :font-normal :italic)
+
+(o/defstyled beans-list-item :li
+  :bg-gray-100
+  :font-bold
+  :px-4 :py-2
+  :rounded-lg
+  :flex :justify-between
+  ([{:beans/keys [id name] :as beans}]
+   (let [roaster-name (:roaster/name beans)]
+     [:<>
+      [:div name (when (string? roaster-name) [beans-list-item-aside roaster-name])]
+      [:button {:on-click #(rf/dispatch [:beans/delete {:beans/id id}])
+                :aria-label (str "Delete beans: " name)}
+       fa/trash-alt]])))
+
+(o/defstyled beans-list-container :ul
+  :space-y-2)
+
+(defn beans-list []
+  (let [beans @(rf/subscribe [:beans/all])]
+    [page-section
+     [page-header "Beans"]
+     (when (empty? beans)
+       [empty-state "Add beans above to use them in your shots"])
+     [beans-list-container
+      (map beans-list-item beans)]]))
+
 (o/defstyled side-by-side :div
   :grid :grid-cols-1 :md:grid-cols-2
   :gap-6)
@@ -301,6 +336,11 @@
     [add-shot-section]
     [add-beans-section]]
    [shot-list]])
+
+(defn beans-page []
+  [page-container
+   [add-beans-section]
+   [beans-list]])
 
 (defn login-page []
   (let [email (rf/subscribe [:login/email])
@@ -339,6 +379,9 @@
    [["/" {:name        :home
           :view        #'home-page
           :controllers [{:start (fn [_] (rf/dispatch [:page/init-home]))}]}]
+    ["/beans" {:name :beans
+               :view #'beans-page
+               :controllers [{:start (fn [_] (rf/dispatch [:page/init-beans]))}]}]
     ["/login" {:name :login
                :view #'login-page
                :controllers [{:start (fn [_] (rf/dispatch [:page/init-login]))}]}]]))

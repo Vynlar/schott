@@ -53,7 +53,7 @@
  (fn [{:keys [schott-auth-token]} _]
    {:http-xhrio
     (with-token schott-auth-token
-      (eql-req {:eql [{:beans/all [:beans/id :beans/name]}]
+      (eql-req {:eql [{:beans/all [:beans/id :beans/name :roaster/name]}]
                 :on-success [:beans/fetch-all-response]}))}))
 
 (rf/reg-event-db
@@ -71,6 +71,16 @@
       (eql-req {:eql [`(schott.resolvers/delete-shot {:shot/id ~id})]
 
                 :on-success [:shots/fetch-all]}))}))
+
+(rf/reg-event-fx
+ :beans/delete
+ [(rf/inject-cofx :local-storage {:key :schott-auth-token})]
+ (fn [{:keys [schott-auth-token]} [_ {:beans/keys [id]}]]
+   {:http-xhrio
+    (with-token schott-auth-token
+      (eql-req {:eql [`(schott.resolvers/delete-beans {:beans/id ~id})]
+
+                :on-success [:beans/fetch-all]}))}))
 
 (rf/reg-event-fx
  :create-shot/submit
@@ -171,6 +181,13 @@
          [:dispatch [:beans/fetch-all]]
          [:dispatch [:create-beans/init-form]]
          [:dispatch [:create-shot/init-form]]]}))
+
+(rf/reg-event-fx
+ :page/init-beans
+ (fn [{:keys [db]} _]
+   {:db (merge db {:shots/all []})
+    :fx [[:dispatch [:create-beans/init-form]]
+         [:dispatch [:beans/fetch-all]]]}))
 
 (rf/reg-event-fx
  :page/init-login

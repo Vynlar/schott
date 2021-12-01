@@ -125,6 +125,12 @@
    (let [shot-id (:shot/id params)]
      (d/transact conn [[:db/retractEntity [:shot/id shot-id]]]))))
 
+(defn delete-beans
+  ([params] (delete-beans conn params))
+  ([conn params]
+   (let [beans-id (:beans/id params)]
+     (d/transact conn [[:db/retractEntity [:beans/id beans-id]]]))))
+
 (defn get-shot-by-id
   ([id] (get-shot-by-id conn id))
   ([conn id]
