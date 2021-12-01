@@ -195,6 +195,17 @@
           [?b :beans/id ?id]]
         @conn id)))
 
+(defn get-shots-by-beans-id
+  ([id] (get-shots-by-beans-id conn id))
+  ([conn id]
+   (d/q '[:find [?sid ...]
+          :in $ ?bid
+          :where
+          [?s :shot/id ?sid]
+          [?s :shot/beans ?b]
+          [?b :beans/id ?bid]]
+        @conn id)))
+
 (defn get-beans-for-user-id
   ([user-id] (get-beans-for-user-id conn user-id))
   ([conn user-id]
@@ -254,6 +265,8 @@
                      :shot/duration 25.0
                      :shot/user [:user/email "three@example.com"]})
 
+  (get-shots-by-beans-id #uuid "f1029988-80cc-4c91-86c0-0f5c53dd012e")
+
   (get-shot-by-id
    (:shot/id
     (ffirst
@@ -273,6 +286,17 @@
          :in $
          :where
          [?b :roaster/name _]]
+       @conn)
+
+  (d/q '[:find (pull ?b [:beans/id {:shot/_beans [:shot/id]}])
+         :in $
+         :where
+         [?b :beans/id _]]
+       @conn)
+
+  (d/q '[:find (pull ?b [{:shot/beans [:beans/id]}])
+         :where
+         [?b :shot/id _]]
        @conn)
 
   conn

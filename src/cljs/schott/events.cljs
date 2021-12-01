@@ -27,18 +27,22 @@
  (fn [_ [_ url-key params query]]
    {:common/navigate-fx! [url-key params query]}))
 
+(def shot-query
+  "Used by shot-card component"
+  [:shot/id
+   :shot/in
+   :shot/out
+   :shot/duration
+   {:shot/beans [:beans/id :beans/name :roaster/name]}
+   :shot/created-at])
+
 (rf/reg-event-fx
  :shots/fetch-all
  [(rf/inject-cofx :local-storage {:key :schott-auth-token})]
  (fn [{:keys [schott-auth-token]} _]
    {:http-xhrio
     (with-token schott-auth-token
-      (eql-req {:eql `[{(:shot/all {:limit 6}) [:shot/id
-                                                :shot/in
-                                                :shot/out
-                                                :shot/duration
-                                                {:shot/beans [:beans/id :beans/name :roaster/name]}
-                                                :shot/created-at]}]
+      (eql-req {:eql `[{(:shot/all {:limit 6}) ~shot-query}]
                 :on-success [:shots/fetch-all-response]}))}))
 
 (rf/reg-event-db
@@ -55,6 +59,25 @@
     (with-token schott-auth-token
       (eql-req {:eql [{:beans/all [:beans/id :beans/name :roaster/name]}]
                 :on-success [:beans/fetch-all-response]}))}))
+
+(defn to-uuid [id]
+  (if (uuid? id) id (uuid id)))
+
+(rf/reg-event-fx
+ :beans/fetch-one
+ [(rf/inject-cofx :local-storage {:key :schott-auth-token})]
+ (fn [{:keys [schott-auth-token]} [_ {:beans/keys [id]}]]
+   {:http-xhrio
+    (with-token schott-auth-token
+      (eql-req {:eql [{[:beans/id (to-uuid id)]
+                       [:beans/id :beans/name :roaster/name {:beans/shots shot-query}]}]
+                :on-success [:beans/fetch-one-response (to-uuid id)]}))}))
+
+(rf/reg-event-db
+ :beans/fetch-one-response
+ (fn [db [_ id res]]
+   (let [beans-details (get res [:beans/id id])]
+     (assoc-in db [:table/beans id] beans-details))))
 
 (rf/reg-event-db
  :beans/fetch-all-response
@@ -78,7 +101,7 @@
  (fn [{:keys [schott-auth-token]} [_ {:beans/keys [id]}]]
    {:http-xhrio
     (with-token schott-auth-token
-      (eql-req {:eql [`(schott.resolvers/delete-beans {:beans/id ~id})]
+      (eql-req {:eql [`(schott.resolvers/delete-beans {:beans/id ~(to-uuid id)})]
 
                 :on-success [:beans/fetch-all]}))}))
 
@@ -190,6 +213,11 @@
          [:dispatch [:beans/fetch-all]]]}))
 
 (rf/reg-event-fx
+ :page/init-beans-details
+ (fn [{:keys [db]} [_ params]]
+   {:fx [[:dispatch [:beans/fetch-one params]]]}))
+
+(rf/reg-event-fx
  :page/init-login
  (fn [{:keys [db]} _]
    {:db (assoc db :login {:email "" :password "" :message nil})}))
@@ -291,9 +319,17 @@
    (get db :beans/all)))
 
 (rf/reg-sub
+ :beans/one
+ (fn [db [_ id]]
+   (get-in db [:table/beans (to-uuid id)])))
+
+(rf/reg-sub
  :forms/field-value
  (fn [db [_ form-name field-name]]
    (get-in db [:forms form-name field-name] "")))
 
-(comment
-  (uuid? (uuid "417320a5-01dd-46ef-8556-cd1f25629a55")))
+(rf/reg-sub
+ :beans-details/id
+ :<- [:common/route]
+ (fn [route _]
+   (-> route :path-params :id)))

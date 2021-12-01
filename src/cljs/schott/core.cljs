@@ -88,9 +88,9 @@
   [navbar-container
    [logo
     fa/coffee-solid
-    [:a {:href "/"} [page-header  "Espresso Logbook"]]]
+    [:a {:href "/#/"} [page-header  "Espresso Logbook"]]]
    [navbar-items-container
-    [:a {:href "#/beans"} "Beans"]
+    [:a {:href "#/beans/"} "Beans"]
     [:a {:href "#/login"} "Login"]]])
 
 (o/defstyled form-container :div
@@ -135,8 +135,8 @@
                         :required true
                         :on-change #(rf/dispatch [:create-shot/update-beans (target-value %)])}
            (when all-beans
-             (conj (map (fn [{:beans/keys [id name]}]
-                          [:option {:key id :value id} name])
+             (conj (map (fn [{:beans/keys [id name] :as beans}]
+                          [:option {:key id :value id} (str name (when (not-empty (:roaster/name beans)) (str " (" (:roaster/name beans) ")")))])
                         all-beans)
                    [:option {:key "empty" :value "" :disabled true} "Select beans"]))]
           [form-help-text "Which beans you are using"]])
@@ -253,12 +253,13 @@
            [shot-card-details-label "Ratio"]
            [:span "1 : " (.toFixed (/ out in) 1)]]
           [shot-card-details-row
-           (let [beans-name (:beans/name beans)]
+           (let [beans-name (:beans/name beans)
+                 beans-id (:beans/id beans)]
              [:div
               [shot-card-details-label "Beans"]
               [:span
                (if (and (string? beans-name) (not (empty? beans-name)))
-                 beans-name
+                 [:a {:href (str "#/beans/" beans-id)} beans-name]
                  "--")]])
            (let [roaster-name (:roaster/name beans)]
              [:div
@@ -308,8 +309,11 @@
   :flex :justify-between
   ([{:beans/keys [id name] :as beans}]
    (let [roaster-name (:roaster/name beans)]
+     ^{:key id}
      [:<>
-      [:div name (when (string? roaster-name) [beans-list-item-aside roaster-name])]
+      [:div
+       [:a {:href (str "#/beans/" id)} name]
+       (when (string? roaster-name) [beans-list-item-aside roaster-name])]
       [:button {:on-click #(rf/dispatch [:beans/delete {:beans/id id}])
                 :aria-label (str "Delete beans: " name)}
        fa/trash-alt]])))
@@ -341,6 +345,34 @@
   [page-container
    [add-beans-section]
    [beans-list]])
+
+(defn beans-details []
+  (let [id @(rf/subscribe [:beans-details/id])
+        details @(rf/subscribe [:beans/one id])
+        shots (:beans/shots details)]
+    [page-container
+     [:div
+      [page-header
+       (:beans/name details)]
+      [page-description
+       (:roaster/name details)]]
+
+     [page-section
+      [:div
+       [page-header "Recent Shots"]
+       [page-description "The most recent shots that used these beans"]]
+
+      (when (empty? shots)
+        [empty-state "Recorded shots will appear here"])
+      [shot-grid
+       (for [{:shot/keys [id] :as shot} shots]
+         ^{:key id} [shot-card-container shot])]]
+
+     [page-section
+      [:div
+       [page-header "Danger Zone"]
+       [page-description "Deleting beans will not delete associated shots"]]
+      [danger-button {:on-click #(rf/dispatch [:beans/delete {:beans/id id}])} "Delete"]]]))
 
 (defn login-page []
   (let [email (rf/subscribe [:login/email])
@@ -379,9 +411,15 @@
    [["/" {:name        :home
           :view        #'home-page
           :controllers [{:start (fn [_] (rf/dispatch [:page/init-home]))}]}]
-    ["/beans" {:name :beans
-               :view #'beans-page
-               :controllers [{:start (fn [_] (rf/dispatch [:page/init-beans]))}]}]
+    ["/beans"
+     ["/" {:name :beans-index
+           :view #'beans-page
+           :controllers [{:start (fn [_] (rf/dispatch [:page/init-beans]))}]}]
+     ["/:id" {:name :beans-details
+              :view #'beans-details
+              :controllers [{:parameters {:path [:id]}
+                             :start (fn [params]
+                                      (rf/dispatch [:page/init-beans-details {:beans/id (-> params :path :id)}]))}]}]]
     ["/login" {:name :login
                :view #'login-page
                :controllers [{:start (fn [_] (rf/dispatch [:page/init-login]))}]}]]))

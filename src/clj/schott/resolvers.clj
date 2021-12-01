@@ -136,6 +136,14 @@
    ::pc/output [:beans/name :roaster/name {:beans/user [:user/id]}]}
   (db/get-beans-by-id conn id))
 
+(pc/defresolver shots-from-beans
+  [{conn :db/conn} {:beans/keys [id]}]
+  {::pc/input #{:beans/id}
+   ::pc/output [{:beans/shots [:shot/id]}]}
+  {:beans/shots
+   (map (fn [shot-id] {:shot/id shot-id})
+        (db/get-shots-by-beans-id conn id))})
+
 (pc/defresolver all-beans
   [{:db/keys [conn]
     :schott.authed/keys [user]} _]
@@ -144,7 +152,7 @@
 
 (def registry [user-from-email user-from-id create-user login create-shot
                shot-from-id shots-by-user current-user delete-shot create-beans
-               beans-from-id all-beans all-shots delete-beans])
+               beans-from-id all-beans all-shots delete-beans shots-from-beans])
 
 (defstate parser
   :start (p/parser {::p/env {::p/reader [p/map-reader
