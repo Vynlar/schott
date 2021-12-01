@@ -10,8 +10,7 @@
   clojure.java-time/clojure.java-time {:mvn/version "0.3.3"}
   com.cognitect/transit-clj {:mvn/version "1.0.324"}
   com.cognitect/transit-cljs {:mvn/version "0.8.269"}
-  com.lambdaisland/ornament {:git/url "https://github.com/Vynlar/ornament"
-                             :git/sha "92abaace308bf1f9790910dfc630f2395fce232f"}
+  com.lambdaisland/ornament {:mvn/version "0.2.19"}
   com.wsscode/pathom {:mvn/version "2.4.0"}
   com.wsscode/pathom3 {:mvn/version "2021.07.10-alpha"}
   conman/conman {:mvn/version "0.9.1"}

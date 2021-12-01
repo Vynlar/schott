@@ -33,13 +33,12 @@
  (fn [{:keys [schott-auth-token]} _]
    {:http-xhrio
     (with-token schott-auth-token
-      (eql-req {:eql `[{(:shot/all {:limit 10}) [:shot/id
-                                                 :shot/in
-                                                 :shot/out
-                                                 :shot/duration
-                                                 {:shot/beans [:beans/id :beans/name]}
-                                                 :shot/created-at]}]
-
+      (eql-req {:eql `[{(:shot/all {:limit 6}) [:shot/id
+                                                :shot/in
+                                                :shot/out
+                                                :shot/duration
+                                                {:shot/beans [:beans/id :beans/name :roaster/name]}
+                                                :shot/created-at]}]
                 :on-success [:shots/fetch-all-response]}))}))
 
 (rf/reg-event-db
@@ -126,21 +125,28 @@
  :create-beans/init-form
  (fn [db _]
    (assoc-in db [:forms :create-beans]
-             {:name ""})))
+             {:name ""
+              :roaster-name ""})))
 
 (rf/reg-event-db
  :create-beans/update-name
  (fn [db [_ new-value]]
    (assoc-in db [:forms :create-beans :name] new-value)))
 
+(rf/reg-event-db
+ :create-beans/update-roaster-name
+ (fn [db [_ new-value]]
+   (assoc-in db [:forms :create-beans :roaster-name] new-value)))
+
 (rf/reg-event-fx
  :create-beans/submit
  [(rf/inject-cofx :local-storage {:key :schott-auth-token})]
  (fn [{:keys [schott-auth-token db]} _]
-   (let [{:keys [name]} (get-in db [:forms :create-beans])]
+   (let [{:keys [name roaster-name]} (get-in db [:forms :create-beans])]
      {:http-xhrio
       (with-token schott-auth-token
-        (eql-req {:eql [{`(schott.resolvers/create-beans {:beans/name ~name})
+        (eql-req {:eql [{`(schott.resolvers/create-beans {:beans/name ~name
+                                                          :roaster/name ~roaster-name})
                          [:beans/id]}]
                   :on-success [:create-beans/response]}))})))
 

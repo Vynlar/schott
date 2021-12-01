@@ -48,9 +48,12 @@
         nil))))
 
 (pc/defresolver shot-from-id
-  [{conn :db/conn} {:shot/keys [id]}]
+  [{:db/keys [conn] :schott.authed/keys [user] :as env}
+   {:shot/keys [id] :as params}]
   {::pc/input #{:shot/id}
    ::pc/output [:shot/in :shot/out :shot/duration :shot/created-at {:shot/user [:user/id]} {:shot/beans [:beans/id]}]}
+  (when-not (and (authenticated? (:ring/request env)) (db/shot-owned-by? conn params user))
+    (throw-unauthorized))
   (db/get-shot-by-id conn id))
 
 (pc/defresolver shots-by-user [_ params]
@@ -106,7 +109,7 @@
                                :schott.authed/keys [user] :as env}
                               params]
   {::pc/sym `create-beans
-   ::pc/params [:beans/name]
+   ::pc/params [:beans/name :roaster/name]
    ::pc/output [:beans/id]}
   (when-not (authenticated? (:ring/request env))
     (throw-unauthorized))
@@ -115,7 +118,7 @@
 (pc/defresolver beans-from-id
   [{conn :db/conn} {:beans/keys [id]}]
   {::pc/input #{:beans/id}
-   ::pc/output [:beans/name {:beans/user [:user/id]}]}
+   ::pc/output [:beans/name :roaster/name {:beans/user [:user/id]}]}
   (db/get-beans-by-id conn id))
 
 (pc/defresolver all-beans
@@ -143,6 +146,14 @@
                                  p/trace-plugin]}))
 
 (comment
+  (def me
+    (get
+     (parser {} [`(login {:user/email "adrian@example.com" :user/password "password"})])
+     `schott.resolvers/login))
+  (def me-id (:user/id me))
+  (parser {:schott.authed/user me
+           :ring/request {:identity me}}
+          [{:shot/all [:shot/id]}])
   (parser {} [`(login {:user/email "adrian@example.com" :user/password "password"})])
   (parser {} [`(create-user {:user/email "adrian@example.com" :user/password "password"})])
   (parser {} [{[:user/email "email@example.com"] [:user/id :user/hashed-password]}]))

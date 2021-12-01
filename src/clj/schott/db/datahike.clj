@@ -54,6 +54,9 @@
              {:db/ident :beans/name
               :db/valueType :db.type/string
               :db/cardinality :db.cardinality/one}
+             {:db/ident :roaster/name
+              :db/valueType :db.type/string
+              :db/cardinality :db.cardinality/one}
              {:db/ident :beans/user
               :db/valueType :db.type/ref
               :db/cardinality :db.cardinality/one}])
@@ -200,13 +203,18 @@
 (defn get-shots-for-user-id
   ([user-id] (get-shots-for-user-id conn user-id))
   ([conn user-id]
-   (d/q '[:find [?sid ...]
-          :in $ ?uid
-          :where
-          [?u :user/id ?uid]
-          [?b :shot/user ?u]
-          [?b :shot/id ?sid]]
-        @conn user-id)))
+   (let [results
+         (d/q '[:find ?date ?sid
+                :in $ ?uid
+                :where
+                [?s :shot/created-at ?date]
+                [?u :user/id ?uid]
+                [?s :shot/user ?u]
+                [?s :shot/id ?sid]]
+              @conn user-id)]
+     (->> results
+          #_(sort-by first)
+          (map second)))))
 
 (comment
   (d/transact conn [{:user/email "blarp@example.com"
@@ -249,9 +257,15 @@
   (d/q '[:find (pull ?u [*]) .
          :in $ ?email
          :where
-         #_[?u :user/id ?id]
          [?u :user/email ?email]]
        @conn "adrian@example.com")
+
+  (d/transact conn [{:roaster/name "youngblood"}])
+  (d/q '[:find (pull ?b [*]) .
+         :in $
+         :where
+         [?b :roaster/name _]]
+       @conn)
 
   conn
 

@@ -12,7 +12,8 @@
    [reitit.core :as reitit]
    [reitit.frontend.easy :as rfe]
    [schott.ajax :as ajax]
-   [schott.events]))
+   [schott.events]
+   [clojure.string :as str]))
 
 (o/defstyled button :button
   :text-purple-500)
@@ -69,6 +70,11 @@
     (.preventDefault e)
     (f e)))
 
+(defn with-propagation-stopped [f]
+  (fn [e]
+    (.stopPropagation e)
+    (f e)))
+
 (defn nav-link [uri title page]
   [:a.navbar-item
    {:href   uri
@@ -80,7 +86,8 @@
 (defn navbar []
   [navbar-container
    fa/coffee-solid
-   [:a {:href "/"} [page-header  "Espresso Logbook"]]])
+   [:a {:href "/"} [page-header  "Espresso Logbook"]]
+   [:a {:href "/login"} "Login"]])
 
 (o/defstyled form-container :div
   :space-y-4 :bg-gray-100 :p-3 :rounded-lg
@@ -121,6 +128,7 @@
           [form-label {:for :create-shot-in} "Beans"]
           [form-select {:id "create-shot-beans"
                         :value beans
+                        :required true
                         :on-change #(rf/dispatch [:create-shot/update-beans (target-value %)])}
            (when all-beans
              (conj (map (fn [{:beans/keys [id name]}]
@@ -131,36 +139,42 @@
        [form-control
         [form-label {:for :create-shot-in} "Dose"]
         [form-input {:id "create-shot-in"
-                     :type :number
+                     :type :decimal
                      :value in
                      :on-change #(rf/dispatch [:create-shot/update-in (target-value %)])}]
         [form-help-text "Grams of ground coffee in"]]
        [form-control
         [form-label {:for :create-shot-in} "Yield"]
         [form-input {:id "create-shot-out"
-                     :type :number
+                     :type :decimal
                      :value out
                      :on-change #(rf/dispatch [:create-shot/update-out (target-value %)])}]
         [form-help-text "Grams of espresso out"]]
        [form-control
         [form-label {:for :create-shot-duration} "Time"]
         [form-input {:id "create-shot-duration"
-                     :type :number
+                     :type :decimal
                      :value duration
                      :on-change #(rf/dispatch [:create-shot/update-duration (target-value %)])}]
         [form-help-text "Length of shot in seconds"]]]
       [form-submit {:type :submit} "Create"]]]))
 
 (defn create-beans-form []
-  (let [name @(rf/subscribe [:forms/field-value :create-beans :name])]
+  (let [name @(rf/subscribe [:forms/field-value :create-beans :name])
+        roaster-name @(rf/subscribe [:forms/field-value :create-beans :roaster-name])]
     [:form {:on-submit (with-default-prevented (fn [_] (rf/dispatch [:create-beans/submit])))}
      [form-container
-      [:div
-       [form-control
-        [form-label {:for :create-beans-name} "Name"]
-        [form-input {:id :create-beans-name
-                     :value name
-                     :on-change #(rf/dispatch [:create-beans/update-name (target-value %)])}]]]
+      [form-control
+       [form-label {:for :create-beans-name} "Name"]
+       [form-input {:id :create-beans-name
+                    :value name
+                    :on-change #(rf/dispatch [:create-beans/update-name (target-value %)])}]]
+
+      [form-control
+       [form-label {:for :create-beans-roaster-name} "Roaster"]
+       [form-input {:id :create-beans-roaster-name
+                    :value roaster-name
+                    :on-change #(rf/dispatch [:create-beans/update-roaster-name (target-value %)])}]]
 
       [form-submit {:type :submit} "Create"]]]))
 
@@ -181,6 +195,7 @@
 (def date-formatter (time-format/formatter "dd MMM yyyy"))
 
 (o/defstyled shot-card-details :div
+  :flex :flex-col
   :space-y-4
   :border-t :border-gray-200 :px-3 :py-2)
 
@@ -198,9 +213,16 @@
   :text-amber-700
   :text-sm :px-1)
 
+(o/defstyled danger-button :button
+  :px-3
+  :py-2
+  :rounded
+  :bg-red-100
+  :text-red-800)
+
 (defn shot-card-container [shot]
   (r/with-let [expanded? (r/atom false)]
-    (let [{:shot/keys [in out duration beans created-at]} shot]
+    (let [{:shot/keys [id in out duration beans created-at]} shot]
       [shot-card {:on-click #(swap! expanded? not)}
        [shot-card-header
         (time-format/unparse date-formatter (time-coerce/from-date created-at))
@@ -221,15 +243,32 @@
           [shot-card-value duration "s"]]]]
        (when @expanded?
          [shot-card-details
-          (when-let [beans-name (:beans/name beans)]
-            [:div
-             [shot-card-details-label "Beans"]
-             [:span beans-name]])
+          (let [beans-name (:beans/name beans)]
+            (when (and (string? beans-name) (not (empty? beans-name)))
+              [:div
+               [shot-card-details-label "Beans"]
+               [:span beans-name]]))
+          (let [roaster-name (:roaster/name beans)]
+            (when (and (string? roaster-name) (not (empty? roaster-name)))
+              [:div
+               [shot-card-details-label "Roaster"]
+               [:span roaster-name]]))
           [:div
            [shot-card-details-label "Tags"]
            [tag-container
             [tag "Fast"]
-            [tag "Sour"]]]])])))
+            [tag "Sour"]]]
+          [danger-button {:on-click (with-propagation-stopped (fn [e] (rf/dispatch [:shots/delete {:shot/id id}])))} "Delete"]])])))
+
+(o/defstyled empty-state :div
+  :p-4
+  :rounded-lg
+  :border-1 :border-gray-200
+  :text-center
+  :italic
+  :text-sm
+  :text-gray-700
+  :bg-gray-100)
 
 (defn shot-list []
   (let [shots @(rf/subscribe [:shots/all])]
@@ -237,6 +276,9 @@
      [:div
       [page-header "Shots"]
       [page-description "Your most recent shots"]]
+
+     (when (empty? shots)
+       [empty-state "Recorded shots will appear here"])
      [shot-grid
       (for [{:shot/keys [id] :as shot} shots]
         ^{:key id} [shot-card-container shot])]]))
@@ -251,13 +293,18 @@
   (let [email (rf/subscribe [:login/email])
         password (rf/subscribe [:login/password])
         message (rf/subscribe [:login/message])]
-    [:form {:on-submit (with-default-prevented (fn [_] (rf/dispatch [:login/submit])))}
-     [:label {:for :email} "Email"]
-     [:input {:id :email :type "email" :value @email :onChange #(rf/dispatch [:login/change-email (target-value %)])}]
-     [:label {:for :password} "Password"]
-     [:input {:id :password :type "password" :value @password :onChange #(rf/dispatch [:login/change-password (target-value %)])}]
-     (when @message [:div @message])
-     [:button {:type :submit} "Login"]]))
+    [page-container
+     [:form {:on-submit (with-default-prevented (fn [_] (rf/dispatch [:login/submit])))}
+      [form-container
+       [:<>
+        [form-control
+         [form-label {:for :email} "Email"]
+         [form-input {:id :email :type "email" :value @email :onChange #(rf/dispatch [:login/change-email (target-value %)])}]]
+        [form-control
+         [form-label {:for :password} "Password"]
+         [form-input {:id :password :type "password" :value @password :onChange #(rf/dispatch [:login/change-password (target-value %)])}]]
+        (when @message [:div @message])]
+       [form-submit {:type :submit} "Login"]]]]))
 
 (defn page []
   (if-let [page @(rf/subscribe [:common/page])]
