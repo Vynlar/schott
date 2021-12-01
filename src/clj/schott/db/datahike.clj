@@ -201,6 +201,7 @@
         @conn user-id)))
 
 (defn get-shots-for-user-id
+  "Returns seq of shot-ids in reverse chronological order"
   ([user-id] (get-shots-for-user-id conn user-id))
   ([conn user-id]
    (let [results
@@ -213,7 +214,8 @@
                 [?s :shot/id ?sid]]
               @conn user-id)]
      (->> results
-          #_(sort-by first)
+          (sort-by first)
+          reverse
           (map second)))))
 
 (comment
